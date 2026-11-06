@@ -1,0 +1,15 @@
+<!-- The fermata, for the status bar while a bell waits. Android draws only its alpha. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M4,16 A8,8 0 0 1 20,16" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,12.8 a2.2,2.2 0 1 1 0,4.4 a2.2,2.2 0 1 1 0,-4.4z" />
+</vector>

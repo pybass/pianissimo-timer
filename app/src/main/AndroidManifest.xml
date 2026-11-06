@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Exact alarms, granted at install. Google Play allows it only for alarm and timer apps. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- The foreground service type for alarms, open to apps that hold USE_EXACT_ALARM. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
+    <!-- Asked at runtime; without it Android hides the app's notifications, the fermata icon included. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Live Updates: the chip with the time left in the status bar. Granted at install. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:label="${appName}"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Portrait only: the layout is made for a phone, and a rotation would recreate the activity and drop unsaved
+             editor state. Android 16+ ignores the lock on large screens, which the app does not target. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity,DiscouragedApi">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".bell.BellService"
+            android:exported="false"
+            android:foregroundServiceType="systemExempted" />
+        <!-- Runs the notification buttons. Not exported: only the app's own notifications can send to it. -->
+        <receiver
+            android:name=".bell.BellActionReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

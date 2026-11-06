@@ -1,0 +1,9 @@
+.gradle/
+build/
+# The Kotlin compiler's session files and error logs.
+.kotlin/
+.idea/
+# The path to the Android SDK on this machine; Gradle writes it.
+local.properties
+# Heap dumps the JVM writes when Gradle runs out of memory.
+*.hprof
