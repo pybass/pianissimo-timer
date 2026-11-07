@@ -29,7 +29,7 @@ val Danger = Color(0xFFB3261E)
 
 // Newsreader: every time on the screen and, in italic, the app name. SIL OFL, see third_party/. All its digits have
 // one width, so a running time does not shift sideways; a face without such digits (`tnum`) cannot replace it.
-// Light is the cut for 72 pt, for the big time and the keypad; Regular and the italic are the cut for 22 pt, for the
+// Light is the cut for 72 pt, for the big time and the wheel; Regular and the italic are the cut for 22 pt, for the
 // small times and the name, where the hairlines of the big cut would fade.
 val Newsreader = FontFamily(
     cut(R.font.newsreader, FontWeight.Light, FontStyle.Normal, opticalSize = 72f),
@@ -46,7 +46,7 @@ private fun cut(file: Int, weight: FontWeight, style: FontStyle, opticalSize: Fl
     variationSettings = FontVariation.Settings(weight, style, FontVariation.Setting("opsz", opticalSize)),
 )
 
-// The style of every time and of the keypad digits. `tnum` asks for the equal-width digits. Newsreader's own line is
+// The style of every time. `tnum` asks for the equal-width digits. Newsreader's own line is
 // only as tall as its letters, with the digits in its upper part: they would sit higher than the text next to them
 // and touch what is above. A line of 1.2 em with all the added height on top puts the digits in its middle.
 val TimeStyle = TextStyle(
@@ -56,7 +56,7 @@ val TimeStyle = TextStyle(
     lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Bottom, LineHeightStyle.Trim.None),
 )
 
-// The narrow column: the keypad and the controls that line up with it.
+// The narrow column of the sound screen's controls and the timer picker.
 val ContentWidth = 260.dp
 
 // The step list, its bar and the buttons under them, on every screen: the sound row and Done on the step screen too,

@@ -18,7 +18,7 @@ that API came in Android 16.1, and the app still runs on 16.0 without the chip.
 
 ## Editor: Zed with kotlin-lsp
 The user edits in Zed with JetBrains kotlin-lsp, not Android Studio. The LSP flags Compose functions
-(`SetupScreen`, `Keypad`) with the `FunctionName` inspection and ignores the ktlint key in `.editorconfig` that
+(`StepScreen`, `TimeWheel`) with the `FunctionName` inspection and ignores the ktlint key in `.editorconfig` that
 allows them, so every file with Compose UI functions starts with `@file:Suppress("FunctionName")`. Keep it.
 
 ## Mandatory Rules (external)

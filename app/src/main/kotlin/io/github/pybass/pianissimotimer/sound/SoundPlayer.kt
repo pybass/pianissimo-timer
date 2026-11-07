@@ -49,7 +49,7 @@ class SoundPlayer {
     // `volumeDb` is 0 or less: how far below its full loudness the sound plays, on top of the alarm volume.
     // `onDone` runs on the main thread when the sound has played to the end, not when it is cut short.
     fun play(sound: Sound, volumeDb: Int, onDone: () -> Unit = {}) {
-        // A linear gain applied on top of the alarm volume; the system volumes stay untouched (docs/spec.md 1.7).
+        // A linear gain applied on top of the alarm volume; the system volumes stay untouched (docs/spec.md 1.6).
         val new = Voice(sound.samples(), 10.0.pow(volumeDb / 20.0).toFloat(), onDone)
         synchronized(lock) {
             if (voice == null) {

@@ -35,23 +35,23 @@ system.
 
 1.5 A phone restart, Settings → Force stop and uninstalling the app cancel the bell (Android does this), and the app
 never brings it back: after any of them it opens idle. — why: a restart is a deliberate act or an agreed update, and
-a timer of some minutes is almost never running then (docs/rejected.md).
+a timer of some minutes is almost never running then.
 
-1.7 The app never changes a system volume, the alarm volume included. It sets the bell's loudness only with its
+1.6 The app never changes a system volume, the alarm volume included. It sets the bell's loudness only with its
 own volume, which can only make the sound quieter. — why: changing the alarm volume would spoil the user's
 wake-up alarms.
 
-1.8 Listen plays the bell exactly as it will ring: the same sound, the alarm stream and the app's volume. — why: the
+1.7 Listen plays the bell exactly as it will ring: the same sound, the alarm stream and the app's volume. — why: the
 user picks the volume by ear; a preview on another stream, like media, would mislead.
 
-1.9 Pause removes every bell from Android and keeps the time left of the current step; Resume schedules the bells of
+1.8 Pause removes every bell from Android and keeps the time left of the current step; Resume schedules the bells of
 that step and the ones after it again, the first for now plus that time. A paused bell cannot ring, even if the app
 is killed. Pause does not silence a bell that is already ringing.
 
-1.10 A paused bell survives the app being killed: opening the app shows it paused with the same time left.
+1.9 A paused bell survives the app being killed: opening the app shows it paused with the same time left.
 — why: its notification outlives the app and must not point to a lost pause.
 
-1.11 The bell plays its step's sound as it was at Start, even after the app is killed; Pause and Resume keep it.
+1.10 The bell plays its step's sound as it was at Start, even after the app is killed; Pause and Resume keep it.
 Editing or deleting that sound later does not change the bell. — why: the bell rings without the app, so it carries
 its own copy.
 
@@ -77,11 +77,7 @@ Intelligence" in the shade and in the open Now bar card. Checked on One UI 9.0; 
 
 ## 3. Setting the time
 
-3.1 Typed digits fill hh mm ss from the right, as in the Android Clock timer: `2500` is 25:00.
-
-3.2 Minutes and seconds may exceed 59: `9000` is 90 minutes.
-
-3.3 A step keeps its length in seconds, not the typed digits: `9000` comes back as 1:30:00 after the app reopens.
+3.1 The time is set on three wheels, hours (0–9), minutes and seconds (0–59), so a step is at most 9:59:59.
 
 ## 4. Sounds
 
