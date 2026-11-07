@@ -1,42 +1,53 @@
 set default-list := true
 
-# adb refuses to pick a device when a phone is plugged in too, so every emulator command names it.
-emulator_serial := "emulator-5554"
+# Emulators are named by Android version: the AVD `android-16` runs Android 16, and so on. Each version always
+# boots on its own port, so its adb serial is fixed and two emulators can run at once. The private recipes
+# `image` and `port` map a version to its system image and port; a new version needs a branch in each and its
+# number in every `pattern`.
 apk := "app/build/outputs/apk/debug/app-debug.apk"
 namespace := "io.github.pybass.pianissimotimer"
 # The recipes work with the debug build, which has its own id (`applicationIdSuffix` in app/build.gradle.kts).
 app_id := namespace + ".debug"
-avd := "pianissimo-timer"
-emulator_image := "system-images;android-37.0;google_apis;arm64-v8a"
-avd_config := home_directory() / ".android/avd" / avd + ".avd/config.ini"
 # The shell expands $ANDROID_HOME when a recipe runs.
 apksigner := "$ANDROID_HOME/build-tools/37.0.0/apksigner"
 release_apk := "app/build/pianissimo-timer.apk"
 # The release version: `versionName` in app/build.gradle.kts.
 version := `sed -n 's/.*versionName = "\(.*\)"/\1/p' app/build.gradle.kts`
 
+# The SDK package of Android <version>'s system image. Google names Android 17's directory `android-37.0`.
+[private]
+image version:
+    @echo "system-images;{{ if version == "16" { "android-36" } else { "android-37.0" } }};google_apis;arm64-v8a"
+
+# The emulator port of Android <version>; adb calls the emulator `emulator-<port>`.
+[private]
+port version:
+    @echo {{ if version == "16" { "5554" } else { "5556" } }}
+
 # avdmanager has no flags for these settings, so the recipe rewrites them in the AVD's config.ini:
 # - hw.keyboard=yes: without it the emulator's Home and Back buttons and the Mac keyboard do nothing.
-# - The host GPU, 8 GB of RAM and 8 cores: with the defaults (no GPU, 2 GB, 4 cores) the emulator lags.
+# - The host GPU, 4 GB of RAM and 8 cores: with the defaults (no GPU, 2 GB, 4 cores) the emulator lags.
 # - The screen is 384x832 dp, as on the user's phone; 480 is a standard emulator density.
-# Create the `pianissimo-timer` emulator, replacing an existing one with all its data.
-emulator-create:
-    sdkmanager "{{ emulator_image }}"
-    avdmanager create avd --force -n {{ avd }} -k "{{ emulator_image }}" -d medium_phone
+# Install Android <version>'s image and create the `android-<version>` emulator, replacing an existing one with all its data.
+[arg("version", pattern="16|17")]
+emulator-create version:
+    sdkmanager "$(just image {{ version }})"
+    avdmanager create avd --force -n android-{{ version }} -k "$(just image {{ version }})" -d medium_phone
     sed -i '' \
         -e 's/^hw.keyboard=.*/hw.keyboard=yes/' \
         -e 's/^hw.gpu.enabled=.*/hw.gpu.enabled=yes/' \
         -e 's/^hw.gpu.mode=.*/hw.gpu.mode=host/' \
-        -e 's/^hw.ramSize=.*/hw.ramSize=8G/' \
+        -e 's/^hw.ramSize=.*/hw.ramSize=4G/' \
         -e 's/^hw.cpu.ncore=.*/hw.cpu.ncore=8/' \
         -e 's/^hw.lcd.width=.*/hw.lcd.width=1152/' \
         -e 's/^hw.lcd.height=.*/hw.lcd.height=2496/' \
         -e 's/^hw.lcd.density=.*/hw.lcd.density=480/' \
-        "{{ avd_config }}"
+        "{{ home_directory() }}/.android/avd/android-{{ version }}.avd/config.ini"
 
-# Boot the `pianissimo-timer` emulator; leave it running in its own terminal.
-emulator:
-    emulator -avd {{ avd }}
+# Boot the `android-<version>` emulator on its own port; leave it running in its own terminal.
+[arg("version", pattern="16|17")]
+emulator version:
+    emulator -avd android-{{ version }} -port $(just port {{ version }})
 
 # Run before a commit: ktlint style, then Android Lint and a full compile. Any warning fails it.
 check:
@@ -93,27 +104,28 @@ release: release-preflight check release-build
 lsp-reset:
     rm -rf "{{ home_directory() }}/Library/Caches/JetBrains/IntelliJServer/workspaces"
 
+# A target is an Android version (its emulator) or `phone`, the phone on USB.
 # `-d` means "the only USB device": no phone serial in the repo, and adb fails when two phones are plugged in.
-# Run adb against the emulator, or against the phone on USB when target is `phone`.
+# adb refuses to pick a device by itself when several are connected, so every emulator command names its serial.
 [private]
 adb target *args:
-    adb {{ if target == "phone" { "-d" } else { "-s " + emulator_serial } }} {{ args }}
+    adb {{ if target == "phone" { "-d" } else { "-s emulator-$(just port " + target + ")" } }} {{ args }}
 
 # Replaces an installed app; channels, permissions and data stay. Use `app-remove` first to reset them.
 # The activity is named in full: its class stays in the namespace, and `/.MainActivity` would look under the debug id.
-# Build, install into the emulator, or into the phone with `phone`, and open the app.
-[arg("target", pattern="emulator|phone")]
-app-run target="emulator": build
+# Build, install into the target (an Android version's emulator, or `phone`) and open the app.
+[arg("target", pattern="16|17|phone")]
+app-run target="16": build
     just adb {{ target }} install {{ apk }}
     just adb {{ target }} shell am start -n {{ app_id }}/{{ namespace }}.MainActivity
 
-# Follow the app's log lines tagged `Bell` (emulator, or the phone with `phone`); leave it running in its own terminal.
-[arg("target", pattern="emulator|phone")]
-log target="emulator":
+# Follow the app's log lines tagged `Bell` on the target; leave it running in its own terminal.
+[arg("target", pattern="16|17|phone")]
+log target="16":
     just adb {{ target }} logcat -s Bell:I
 
 # A notification channel keeps its first settings forever, so this is how a channel change lands.
-# Remove the app with everything it stored: channels, permissions, data (emulator, or the phone with `phone`).
-[arg("target", pattern="emulator|phone")]
-app-remove target="emulator":
+# Remove the app from the target with everything it stored: channels, permissions, data.
+[arg("target", pattern="16|17|phone")]
+app-remove target="16":
     just adb {{ target }} uninstall {{ app_id }}

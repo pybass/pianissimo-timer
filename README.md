@@ -27,7 +27,7 @@ very quiet.
 
 ## Install
 
-Requires Android 17 or newer. The app is not on Google Play. Install it from a file:
+Requires Android 16 or newer. The app is not on Google Play. Install it from a file:
 
 1. On the phone, download the newest `.apk` from
    [Releases](https://github.com/pybass/pianissimo-timer/releases/latest).
@@ -46,9 +46,10 @@ if it was closed, and it plays the sound. Stop and Pause cancel the alarms; Resu
 
 ## Development
 
-Built with Kotlin. Needs `just`, a JDK and the Android SDK (`ANDROID_HOME`). `just` lists the recipes. First run:
-`just emulator-create` once, `just emulator` in its own terminal, then `just app-run`. On a phone with USB
-debugging on: `just app-run phone`.
+Built with Kotlin. Needs `just`, a JDK and the Android SDK (`ANDROID_HOME`). `just` lists the recipes. Emulators
+are named by Android version, `16` or `17`, and can run side by side. First run: `just emulator-create 16` once,
+`just emulator 16` in its own terminal, then `just app-run 16`. On a phone with USB debugging on:
+`just app-run phone`.
 
 - [Spec](docs/spec.md): the rules the app must keep.
 - [Rejected](docs/rejected.md): ideas turned down, with the reason for each.

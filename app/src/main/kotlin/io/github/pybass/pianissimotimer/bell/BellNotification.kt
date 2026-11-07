@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import io.github.pybass.pianissimotimer.R
 import io.github.pybass.pianissimotimer.formatLeft
@@ -29,9 +30,7 @@ fun showWaitingNotification(context: Context, due: Long, stepsLeft: Int) {
         .setUsesChronometer(true)
         .setChronometerCountDown(true)
         .setOngoing(true)
-        // A Live Update: the status bar shows the chip with the time left.
-        .setRequestPromotedOngoing(true)
-        .addExtras(samsungLiveUpdate())
+        .requestLiveUpdate()
         .setDeleteIntent(actionIntent(context, ACTION_SHOW))
         .addAction(button(context, "Pause", ACTION_PAUSE))
         .addAction(button(context, "Stop", ACTION_STOP))
@@ -49,8 +48,7 @@ fun showPausedNotification(context: Context, left: Long, stepsLeft: Int) {
         .setNumber(stepsLeft)
         .setShowWhen(false)
         .setOngoing(true)
-        .setRequestPromotedOngoing(true)
-        .addExtras(samsungLiveUpdate())
+        .requestLiveUpdate()
         .setDeleteIntent(actionIntent(context, ACTION_SHOW))
         .addAction(button(context, "Resume", ACTION_RESUME))
         .addAction(button(context, "Stop", ACTION_STOP))
@@ -58,9 +56,17 @@ fun showPausedNotification(context: Context, left: Long, stepsLeft: Int) {
     context.getSystemService(NotificationManager::class.java).notify(WAITING_ID, notification)
 }
 
-// Samsung One UI ignores `setRequestPromotedOngoing` without this undocumented extra. Never add
-// `android.ongoingActivityNoti.style`: it cancels the effect.
-private fun samsungLiveUpdate() = Bundle().apply { putBoolean("android.ongoingActivityNoti.automation", true) }
+// A Live Update: the status bar shows the chip with the time left. Live Updates exist since Android 16.1, so
+// `SDK_INT_FULL` is compared, which counts minor releases; on Android 16.0 the notification is a plain ongoing one
+// and only the chip is missing. Samsung One UI ignores `setRequestPromotedOngoing` without the undocumented extra.
+// Never add `android.ongoingActivityNoti.style`: it cancels the effect.
+private fun Notification.Builder.requestLiveUpdate(): Notification.Builder =
+    if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
+        setRequestPromotedOngoing(true)
+            .addExtras(Bundle().apply { putBoolean("android.ongoingActivityNoti.automation", true) })
+    } else {
+        this
+    }
 
 fun hideWaitingNotification(context: Context) {
     context.getSystemService(NotificationManager::class.java).cancel(WAITING_ID)

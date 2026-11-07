@@ -10,10 +10,11 @@ All code, comments, commit messages, and files must ALWAYS be in English — no 
 ## Prototype mode
 The project is a prototype. Do not write tests unless the user asks for them in the task.
 
-## Android 17+ only
-The app requires Android 17 (API 37) or newer, set by `minSdk` in `app/build.gradle.kts`. Use current platform
+## Android 16+ only
+The app requires Android 16 (API 36) or newer, set by `minSdk` in `app/build.gradle.kts`. Use current platform
 APIs directly. Never add version checks, fallbacks for older Android, or AndroidX `*Compat` wrappers that
-exist only to support older versions.
+exist only to support older versions. The one exception is the Live Update check in `BellNotification.kt`:
+that API came in Android 16.1, and the app still runs on 16.0 without the chip.
 
 ## Editor: Zed with kotlin-lsp
 The user edits in Zed with JetBrains kotlin-lsp, not Android Studio. The LSP flags Compose functions
