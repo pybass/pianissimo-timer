@@ -51,6 +51,7 @@ import kotlin.math.sin
 // The countdown and the paused screen share this: the time left of the current step, the time left in all, the steps
 // as a list to read, and Stop next to the main button, named by `primary` (Pause or Resume). `left` and `leftInAll`
 // are in ms. A one-step timer gets no list and no "in all": both would repeat the time above.
+// Its caption names the sound instead.
 @Composable
 fun RunLayout(
     bells: List<Bell>,
@@ -77,10 +78,10 @@ fun RunLayout(
             val length = bells[step].due - from
             ProgressArc(progress = if (length > 0) (1 - left.toFloat() / length).coerceIn(0f, 1f) else 1f, paused)
             TimeText(formatLeft(left), muted = paused)
-            val parts = listOfNotNull("Paused".takeIf { paused }, "${formatLeft(leftInAll)} in all".takeIf { bells.size > 1 })
-            if (parts.isNotEmpty()) {
-                Text(parts.joinToString(", "), color = Muted, fontSize = 15.sp, style = TextStyle(fontFeatureSettings = "tnum"))
-            }
+            // The only step has no list under the time to name its sound, so the caption does.
+            val about = if (bells.size == 1) "${bells[0].sound.name} at the end" else "${formatLeft(leftInAll)} in all"
+            val parts = listOfNotNull("Paused".takeIf { paused }, about)
+            Text(parts.joinToString(", "), color = Muted, fontSize = 15.sp, style = TextStyle(fontFeatureSettings = "tnum"))
             Spacer(Modifier.height(28.dp))
             // The last child without a weight, as on the timer screen: it gets the height left and scrolls inside it.
             if (bells.size > 1) {

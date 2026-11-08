@@ -37,11 +37,13 @@ import io.github.pybass.pianissimotimer.sound.SoundLibrary
 import io.github.pybass.pianissimotimer.sound.SoundPlayer
 import io.github.pybass.pianissimotimer.sound.SoundStore
 import io.github.pybass.pianissimotimer.timer.Step
+import io.github.pybass.pianissimotimer.timer.Timer
 import io.github.pybass.pianissimotimer.timer.TimerLibrary
 import io.github.pybass.pianissimotimer.timer.TimerState
 import io.github.pybass.pianissimotimer.timer.TimerStore
 import io.github.pybass.pianissimotimer.timer.newTimer
 import io.github.pybass.pianissimotimer.ui.screens.CountdownScreen
+import io.github.pybass.pianissimotimer.ui.screens.OneStepScreen
 import io.github.pybass.pianissimotimer.ui.screens.PausedScreen
 import io.github.pybass.pianissimotimer.ui.screens.SoundScreen
 import io.github.pybass.pianissimotimer.ui.screens.StepScreen
@@ -128,57 +130,99 @@ private fun IdleScreens(
     // Kept here, not in the timer screen: that screen leaves while a step is open, and the list must come back where
     // it was. Each timer gets a new one, so another timer opens at its first step.
     val stepsScroll = remember(timers.selected) { ScrollState(0) }
-    val i = editing
-    // `getOrNull`: right after Add step the index may point past the list this composition still sees.
-    val step = i?.let { timer.steps.getOrNull(it) }
-    val d = draft
-    if (i == null || step == null) {
-        TimerScreen(
-            timers = timers,
-            onSelectTimer = { scope.launch { timerStore.select(it) } },
-            // A new timer takes the first sound in the library: it always exists, unlike a sound by name.
-            onNewTimer = { scope.launch { timerStore.add(newTimer(timers.newName(), sounds.sounds.first().name)) } },
-            onRenameTimer = { t, name -> scope.launch { timerStore.replace(t.name, t.copy(name = name)) } },
-            onDeleteTimer = { scope.launch { timerStore.delete(it.name) } },
-            sounds = sounds,
-            stepsScroll = stepsScroll,
-            onEditStep = { editing = it },
-            // A new step is a copy of the last one, time included: a step is never stored with 0:00 (docs/spec.md 5.1).
-            // It opens only once it is saved, so the step screen finds it in the timer.
-            onAddStep = {
-                scope.launch {
-                    timerStore.replace(timer.name, timer.copy(steps = timer.steps + timer.steps.last()))
-                    editing = timer.steps.size
-                }
-            },
-            onListen = { timer.steps[it].let { step -> preview.play(sounds.soundFor(step.sound), step.volumeDb) } },
-            onStart = { scope.launch { timerStore.start(timer, sounds) } },
-        )
-        return
+
+    fun selectTimer(name: String) {
+        scope.launch { timerStore.select(name) }
     }
 
-    suspend fun saveStep(new: Step) = timerStore.replace(timer.name, timer.withStep(i, new))
-    if (d == null) {
-        StepScreen(
-            timerName = timer.name,
-            steps = timer.steps,
-            number = i + 1,
-            step = step,
-            onChange = { scope.launch { saveStep(it) } },
-            sounds = sounds,
-            onNewSound = { draft = Draft(sounds.soundFor(step.sound).copy(name = sounds.newName()), isNew = true) },
-            onEditSound = { draft = Draft(it, isNew = false) },
-            onListen = { preview.play(it, step.volumeDb) },
-            // The screen closes first: with the step gone, its index would point past the end.
-            onDelete = {
-                editing = null
-                scope.launch { timerStore.replace(timer.name, timer.withoutStep(i)) }
-            },
-            canDelete = timer.steps.size > 1,
-            onDone = { editing = null },
-        )
+    // A new timer takes the first sound in the library: it always exists, unlike a sound by name.
+    fun addTimer() {
+        scope.launch { timerStore.add(newTimer(timers.newName(), sounds.sounds.first().name)) }
+    }
+
+    fun renameTimer(t: Timer, name: String) {
+        scope.launch { timerStore.replace(t.name, t.copy(name = name)) }
+    }
+
+    fun deleteTimer(t: Timer) {
+        scope.launch { timerStore.delete(t.name) }
+    }
+
+    // A new step is a copy of the last one, time included: a step is never stored with 0:00 (docs/spec.md 5.1). It
+    // opens only once it is saved, so the step screen finds it in the timer.
+    fun addStep() {
+        scope.launch {
+            timerStore.replace(timer.name, timer.copy(steps = timer.steps + timer.steps.last()))
+            editing = timer.steps.size
+        }
+    }
+
+    fun start() {
+        scope.launch { timerStore.start(timer, sounds) }
+    }
+
+    suspend fun saveStep(index: Int, new: Step) = timerStore.replace(timer.name, timer.withStep(index, new))
+
+    val open = editing
+    // The step on the screen: the open one, or the only one, which `OneStepScreen` edits in place. `getOrNull`: right
+    // after Add step the index may point past the list this composition still sees.
+    val i = open ?: if (timer.steps.size == 1) 0 else null
+    val step = i?.let { timer.steps.getOrNull(it) }
+    val d = draft
+    if (d == null || i == null || step == null) {
+        if (open != null && step != null) {
+            StepScreen(
+                timerName = timer.name,
+                steps = timer.steps,
+                number = open + 1,
+                step = step,
+                onChange = { scope.launch { saveStep(open, it) } },
+                sounds = sounds,
+                onNewSound = { draft = Draft(sounds.soundFor(step.sound).copy(name = sounds.newName()), isNew = true) },
+                onEditSound = { draft = Draft(it, isNew = false) },
+                onListen = { preview.play(it, step.volumeDb) },
+                // The screen closes first: with the step gone, its index would point past the end.
+                onDelete = {
+                    editing = null
+                    scope.launch { timerStore.replace(timer.name, timer.withoutStep(open)) }
+                },
+                onDone = { editing = null },
+            )
+        } else if (timer.steps.size == 1) {
+            val only = timer.steps.first()
+            OneStepScreen(
+                timers = timers,
+                onSelectTimer = ::selectTimer,
+                onNewTimer = ::addTimer,
+                onRenameTimer = ::renameTimer,
+                onDeleteTimer = ::deleteTimer,
+                step = only,
+                onChange = { scope.launch { saveStep(0, it) } },
+                sounds = sounds,
+                onNewSound = { draft = Draft(sounds.soundFor(only.sound).copy(name = sounds.newName()), isNew = true) },
+                onEditSound = { draft = Draft(it, isNew = false) },
+                onListen = { preview.play(it, only.volumeDb) },
+                onAddStep = ::addStep,
+                onStart = ::start,
+            )
+        } else {
+            TimerScreen(
+                timers = timers,
+                onSelectTimer = ::selectTimer,
+                onNewTimer = ::addTimer,
+                onRenameTimer = ::renameTimer,
+                onDeleteTimer = ::deleteTimer,
+                sounds = sounds,
+                stepsScroll = stepsScroll,
+                onEditStep = { editing = it },
+                onAddStep = ::addStep,
+                onListen = { timer.steps[it].let { step -> preview.play(sounds.soundFor(step.sound), step.volumeDb) } },
+                onStart = ::start,
+            )
+        }
         return
     }
+    // The sound editor, over the step whose sound row opened it.
     SoundScreen(
         initial = d.sound,
         isNew = d.isNew,
@@ -192,7 +236,7 @@ private fun IdleScreens(
             scope.launch {
                 soundStore.replace(d.sound.name, renamed)
                 // The step keeps its sound under the new name.
-                if (step.sound == d.sound.name) saveStep(step.copy(sound = name))
+                if (step.sound == d.sound.name) saveStep(i, step.copy(sound = name))
             }
             draft = d.copy(sound = renamed)
         },
@@ -202,7 +246,7 @@ private fun IdleScreens(
             scope.launch {
                 if (d.isNew) {
                     soundStore.add(sound)
-                    saveStep(step.copy(sound = sound.name))
+                    saveStep(i, step.copy(sound = sound.name))
                 } else {
                     soundStore.replace(d.sound.name, sound)
                 }

@@ -14,36 +14,34 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.pybass.pianissimotimer.R
 import io.github.pybass.pianissimotimer.formatSeconds
 import io.github.pybass.pianissimotimer.sound.SoundLibrary
 import io.github.pybass.pianissimotimer.timer.Step
 import io.github.pybass.pianissimotimer.timer.Timer
 import io.github.pybass.pianissimotimer.timer.TimerLibrary
+import io.github.pybass.pianissimotimer.ui.components.AddStepRow
 import io.github.pybass.pianissimotimer.ui.components.ListenButton
 import io.github.pybass.pianissimotimer.ui.components.PillButton
 import io.github.pybass.pianissimotimer.ui.components.StepBar
 import io.github.pybass.pianissimotimer.ui.components.TimeText
 import io.github.pybass.pianissimotimer.ui.components.TimerPicker
-import io.github.pybass.pianissimotimer.ui.theme.Action
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
 import io.github.pybass.pianissimotimer.ui.theme.StepsWidth
 import io.github.pybass.pianissimotimer.ui.theme.TimeStyle
 
-// The chosen timer: its total time, a bar with the length of each step next to the others, and a row per step. A tap
-// on a row opens the step; `onEditStep` and `onListen` get the step's index. `stepsScroll` is how far the list of
-// steps is scrolled; the caller keeps it, so it outlives this screen.
+// The chosen timer of two or more steps (one step is `OneStepScreen`): its total time, a bar with the length of each
+// step next to the others, and a row per step. A tap on a row opens the step; `onEditStep` and `onListen` get the
+// step's index. `stepsScroll` is how far the list of steps is scrolled; the caller keeps it, so it outlives this
+// screen.
 @Composable
 fun TimerScreen(
     timers: TimerLibrary,
@@ -79,14 +77,7 @@ fun TimerScreen(
                     StepRow(i, step, sounds, onClick = { onEditStep(i) }, onListen = { onListen(i) })
                 }
                 HorizontalDivider(color = Ink.copy(alpha = 0.12f))
-                Row(
-                    Modifier.fillMaxWidth().height(48.dp).clickable(onClick = onAddStep),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(painterResource(R.drawable.ic_add), contentDescription = null, tint = Action)
-                    Text("Add step", color = Action, fontSize = 16.sp)
-                }
+                AddStepRow(onAddStep)
             }
             Spacer(Modifier.weight(2f))
         }

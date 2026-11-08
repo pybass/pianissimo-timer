@@ -43,8 +43,8 @@ import io.github.pybass.pianissimotimer.ui.theme.StepsWidth
 // One step: its length on the wheel, its sound and volume on the sound row. Every change goes out through `onChange`
 // at once, except a time of 0:00:00: that stays on the screen, and the screen cannot be left while the wheel shows it
 // (docs/spec.md 5.1). Done only goes back. `steps` are all the steps of the timer named `timerName`, for the bar;
-// `number` is the step's place among them, from 1. `canDelete` is false for the only step of the timer, which hides
-// Delete.
+// `number` is the step's place among them, from 1. The step can always be deleted: the only step of a timer never
+// opens here (`OneStepScreen` edits it in place).
 @Composable
 fun StepScreen(
     timerName: String,
@@ -57,7 +57,6 @@ fun StepScreen(
     onEditSound: (Sound) -> Unit,
     onListen: (Sound) -> Unit,
     onDelete: () -> Unit,
-    canDelete: Boolean,
     onDone: () -> Unit,
 ) {
     // The time on the wheel, kept apart from the saved seconds: the step keeps its last time while the wheel shows 0:00:00.
@@ -84,14 +83,12 @@ fun StepScreen(
                 Text("Step $number", color = Ink, fontSize = 17.sp)
                 Text(timerName, color = Muted, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            if (canDelete) {
-                IconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    colors = IconButtonDefaults.iconButtonColors(contentColor = Muted),
-                ) {
-                    Icon(painterResource(R.drawable.ic_delete), contentDescription = "Delete step")
-                }
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.align(Alignment.CenterEnd),
+                colors = IconButtonDefaults.iconButtonColors(contentColor = Muted),
+            ) {
+                Icon(painterResource(R.drawable.ic_delete), contentDescription = "Delete step")
             }
         }
         Spacer(Modifier.height(10.dp))
