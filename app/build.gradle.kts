@@ -41,6 +41,11 @@ android {
     lint {
         warningsAsErrors = true
     }
+
+    testOptions {
+        // JUnit 5 runs on the JUnit Platform; without this Gradle looks for JUnit 4 tests and finds none.
+        unitTests.all { it.useJUnitPlatform() }
+    }
 }
 
 kotlin {
@@ -57,4 +62,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
     implementation("androidx.datastore:datastore-preferences:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+
+    // Unit tests run on the computer's JVM, not on a device. kotlin-test gives assertEquals and friends in Kotlin;
+    // JUnit 5 (Jupiter) runs the tests, and the launcher is how Gradle starts it. kotlin-test's version is Kotlin's.
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:2.4.21")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
 }

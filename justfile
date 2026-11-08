@@ -49,10 +49,14 @@ emulator-create version:
 emulator version:
     emulator -avd android-{{ version }} -port $(just port {{ version }})
 
-# Run before a commit: ktlint style, then Android Lint and a full compile. Any warning fails it.
+# Run before a commit: ktlint style, then Android Lint, the unit tests and a full compile. Any warning fails it.
 check:
     ktlint "**/*.kt" "**/*.kts"
-    ./gradlew lint assembleDebug
+    ./gradlew lint testDebugUnitTest assembleDebug
+
+# Run the unit tests; they run on this computer, no emulator needed.
+test:
+    ./gradlew testDebugUnitTest
 
 # Apply ktlint's autofixes.
 fix:

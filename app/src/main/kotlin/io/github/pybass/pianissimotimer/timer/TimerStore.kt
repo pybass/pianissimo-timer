@@ -1,57 +1,27 @@
 package io.github.pybass.pianissimotimer.timer
 
 import android.content.Context
-import androidx.datastore.core.DataMigration
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import io.github.pybass.pianissimotimer.bell.cancelBells
 import io.github.pybass.pianissimotimer.bell.isBellScheduled
 import io.github.pybass.pianissimotimer.bell.pauseBells
 import io.github.pybass.pianissimotimer.bell.scheduleBells
+import io.github.pybass.pianissimotimer.data.STATE
+import io.github.pybass.pianissimotimer.data.TIMERS
+import io.github.pybass.pianissimotimer.data.appData
+import io.github.pybass.pianissimotimer.data.decodeState
+import io.github.pybass.pianissimotimer.data.decodeTimers
 import io.github.pybass.pianissimotimer.sound.SoundLibrary
 import io.github.pybass.pianissimotimer.sound.json
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// One store per file in the whole app: a second DataStore on the same file throws.
-private val Context.store by preferencesDataStore("timer", produceMigrations = { listOf(TimerDataReset(it)) })
-
-private val LIBRARY = stringPreferencesKey("library")
-private val STATE = stringPreferencesKey("state")
-private val VERSION = intPreferencesKey("version")
-
-// Bump when the saved format changes incompatibly, including the bells in the state. Unversioned data has format 1.
-private const val DATA_VERSION = 1
-
-private class TimerDataReset(private val context: Context) : DataMigration<Preferences> {
-    // Validate once at initialization, before any reader or edit can see the saved data.
-    override suspend fun shouldMigrate(currentData: Preferences) = true
-
-    override suspend fun migrate(currentData: Preferences): Preferences {
-        val prefs = currentData.toMutablePreferences()
-        val reset = (prefs[VERSION] ?: 1) != DATA_VERSION
-        val state = if (reset) null else decodeState(prefs)
-        // An unreadable state becomes Idle below, so its bells must not stay.
-        if (state == null) cancelBells(context)
-        if (reset) prefs.clear()
-        prefs[LIBRARY] = json.encodeToString(decodeLibrary(prefs))
-        prefs[STATE] = json.encodeToString<TimerState>(state ?: TimerState.Idle)
-        prefs[VERSION] = DATA_VERSION
-        return prefs
-    }
-
-    override suspend fun cleanUp() = Unit
-}
-
-// The only place that changes the saved timers and the timer state. Each is one JSON string, so each change is
-// atomic. Each state change updates the bells, then saves the state, so it survives a kill.
+// The only place that changes the saved timers and the timer state. Each state change updates the bells, then saves
+// the state, so it survives a kill.
 class TimerStore(private val context: Context) {
-    val library: Flow<TimerLibrary> = context.store.data.map(::decodeLibrary)
+    val library: Flow<TimerLibrary> = context.appData.data.map(::decodeTimers)
 
-    val state: Flow<TimerState> = context.store.data.map { prefs ->
+    val state: Flow<TimerState> = context.appData.data.map { prefs ->
         val state = decodeState(prefs) ?: TimerState.Idle
         // A saved Running whose last bell Android has dropped would count down to no bell.
         if (state is TimerState.Running && !isBellScheduled(context, state.bells.lastIndex)) TimerState.Idle else state
@@ -114,39 +84,10 @@ class TimerStore(private val context: Context) {
     suspend fun done() = save(TimerState.Idle)
 
     private suspend fun update(change: (TimerLibrary) -> TimerLibrary) {
-        context.store.edit { prefs -> prefs[LIBRARY] = json.encodeToString(change(decodeLibrary(prefs))) }
+        context.appData.edit { prefs -> prefs[TIMERS] = json.encodeToString(change(decodeTimers(prefs))) }
     }
 
     private suspend fun save(state: TimerState) {
-        context.store.edit { prefs -> prefs[STATE] = json.encodeToString<TimerState>(state) }
-    }
-}
-
-private fun decodeLibrary(prefs: Preferences): TimerLibrary {
-    val library = try {
-        prefs[LIBRARY]?.let { json.decodeFromString<TimerLibrary>(it) }
-    } catch (e: IllegalArgumentException) {
-        null
-    }
-    return library?.takeIf { lib ->
-        lib.timers.any { it.name == lib.selected } &&
-            lib.timers.all { timer -> timer.steps.isNotEmpty() && timer.steps.all { it.seconds > 0 } }
-    } ?: TimerLibrary(listOf(DefaultTimer), selected = DefaultTimer.name)
-}
-
-// Null when the saved state cannot be read, as after an update that added a field: a crash here would repeat on every
-// launch.
-private fun decodeState(prefs: Preferences): TimerState? {
-    val text = prefs[STATE] ?: return TimerState.Idle
-    return try {
-        json.decodeFromString<TimerState>(text).takeIf {
-            when (it) {
-                TimerState.Idle -> true
-                is TimerState.Running -> it.bells.isNotEmpty()
-                is TimerState.Paused -> it.bells.isNotEmpty()
-            }
-        }
-    } catch (e: IllegalArgumentException) {
-        null
+        context.appData.edit { prefs -> prefs[STATE] = json.encodeToString<TimerState>(state) }
     }
 }

@@ -1,7 +1,7 @@
 # Pianissimo Timer — behavioral spec
 
 **Normative, but not final.** Each item is one checkable rule about what the app does. Code that differs is a bug.
-The app is a prototype, so an item may be wrong or out of date. When an item blocks a task or a better design,
+An item may be wrong or out of date. When an item blocks a task or a better design,
 say so and propose a new wording. Change an item only after the user agrees. An item tagged **(planned)** is
 agreed but not built yet.
 
@@ -96,3 +96,15 @@ library must reach every timer that uses it.
 
 5.3 Start hands Android one bell per step, all at once; the ring of a step schedules nothing. — why: a chain built
 at each ring breaks when one link fails.
+
+## 6. Saved data
+
+6.1 An update never loses the timers and sounds the user made: data saved by any earlier version is brought to the
+current format at the first launch, step by step through every version between. The builds up to 0.2.0 saved into
+other files; that data is not read.
+
+6.2 Saved data the app cannot read never crashes it: an unreadable library gives way to the default one, an unreadable
+state to idle with its bells cancelled. — why: a crash on reading would repeat on every launch.
+
+6.3 An update resets a running or paused timer to idle whenever the saved format changes. — why: the bells carry
+copies of the sounds in the old form; a timer of some minutes is almost never running during an update.
