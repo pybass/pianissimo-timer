@@ -24,16 +24,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
 import io.github.pybass.pianissimotimer.sound.Sound
-import io.github.pybass.pianissimotimer.sound.SoundLibrary
+import io.github.pybass.pianissimotimer.sound.soundFor
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
 
 // One row for a step's sound: listen, choose it, set the volume. The step row of the timer screen, opened: as wide,
-// no fill, the hairlines around it belong to the screen. `selected` is the step's sound name; `onSelect` gets a
-// sound's name.
+// no fill, the hairlines around it belong to the screen. `selected` is the step's sound id; `onSelect` gets a
+// sound's id.
 @Composable
 fun SoundBar(
-    library: SoundLibrary,
+    sounds: List<Sound>,
     selected: String,
     onSelect: (String) -> Unit,
     onNewSound: () -> Unit,
@@ -43,7 +43,7 @@ fun SoundBar(
     onListen: (Sound) -> Unit,
 ) {
     var choosing by remember { mutableStateOf(false) }
-    val sound = library.soundFor(selected)
+    val sound = sounds.soundFor(selected)
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -71,5 +71,5 @@ fun SoundBar(
         }
         VolumeWheel(volumeDb, onVolumeChange)
     }
-    if (choosing) SoundSheet(library, sound.name, onSelect, onNewSound, onEdit, onListen, onClose = { choosing = false })
+    if (choosing) SoundSheet(sounds, sound.id, onSelect, onNewSound, onEdit, onListen, onClose = { choosing = false })
 }

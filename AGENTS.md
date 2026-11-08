@@ -45,5 +45,7 @@ The user is new to Kotlin and Android development and wants to understand every 
 ## Project Reading (context)
 - [docs/spec.md](docs/spec.md) — behavioral spec (normative): the non-obvious rules the app must keep.
   Read it before the first task. Keep it short; its header says what belongs there.
+- [docs/data.md](docs/data.md) — the saved file: one JSON example and the meaning of every field. Read it before a
+  change in package `data`.
 - [docs/rejected.md](docs/rejected.md) — ideas the user decided against, each with its reason. Do not propose one
   again unless its reason no longer holds.

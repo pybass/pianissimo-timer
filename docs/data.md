@@ -1,0 +1,149 @@
+# Saved data
+
+**Partly built.** The app saves this format; the migration chain and the per-section fallbacks below are not built
+yet.
+
+The rules the format must keep are in [spec.md](spec.md), section 6. This file shows the shape: one example of the
+whole file and the meaning of every field. The frozen JSON in `app/src/test/kotlin/.../data/` is the contract the
+tests check; this example must stay equal to the frozen JSON of the current version.
+
+## One file
+
+Everything the app saves is one JSON document, written atomically by DataStore (a typed store with a JSON
+serializer, not Preferences). The document carries its own `version`. On every launch the app reads the file,
+runs the migration steps from the saved version up to the current one, then reads every value back and writes it in
+its current form, so a value it cannot read gives way to its default.
+
+Rules of the document:
+
+- Items are referenced by `id`, never by name. An id never changes and is unique within its list: the default timer
+  and sounds have fixed words (`timer`, `piano`), everything the user makes gets a random UUID. Names are for the
+  user: they can be edited freely and must be unique within their list, ignoring case.
+- Instants end in `At` and are milliseconds since the epoch. Durations carry their unit in the name.
+- Enum values are lowercase words, not Kotlin constant names, so a rename in Kotlin does not change the file.
+- Every field is always written, defaults included, so a changed default never changes saved data.
+- Unknown fields are ignored on read, so a removed field does not break old files.
+
+## Example
+
+```json
+{
+  "version": 1,
+  "selectedTimerId": "7a1c2e40-9d7b-4a3f-8e0c-2b6f1d9a5c11",
+  "timers": [
+    {
+      "id": "7a1c2e40-9d7b-4a3f-8e0c-2b6f1d9a5c11",
+      "name": "Pomodoro",
+      "steps": [
+        { "seconds": 1500, "soundId": "piano", "volumeDb": 0 },
+        { "seconds": 300, "soundId": "bell", "volumeDb": -6 }
+      ]
+    },
+    {
+      "id": "timer",
+      "name": "Timer",
+      "steps": [
+        { "seconds": 1500, "soundId": "piano", "volumeDb": 0 }
+      ]
+    }
+  ],
+  "sounds": [
+    { "id": "piano", "name": "Piano", "type": "piano", "note": 60, "rise": 0.0, "length": 5.0 },
+    { "id": "bell", "name": "Bell", "type": "bell", "note": 72, "rise": 0.0, "length": 8.0 },
+    { "id": "flute", "name": "Flute", "type": "flute", "note": 64, "rise": 1.5, "length": 4.0 },
+    { "id": "string", "name": "String", "type": "string", "note": 55, "rise": 0.0, "length": 6.0 }
+  ],
+  "state": {
+    "type": "paused",
+    "startedAt": 1762600000000,
+    "pausedAt": 1762600600000,
+    "bells": [
+      {
+        "dueAt": 1762601500000,
+        "sound": { "id": "piano", "name": "Piano", "type": "piano", "note": 60, "rise": 0.0, "length": 5.0 },
+        "volumeDb": 0
+      },
+      {
+        "dueAt": 1762601800000,
+        "sound": { "id": "bell", "name": "Bell", "type": "bell", "note": 72, "rise": 0.0, "length": 8.0 },
+        "volumeDb": -6
+      }
+    ]
+  }
+}
+```
+
+The other two states:
+
+```json
+{ "type": "idle" }
+```
+
+```json
+{ "type": "running", "startedAt": 1762600000000, "bells": [ ... ] }
+```
+
+## Fields
+
+### Document
+
+| Field | Meaning |
+|---|---|
+| `version` | Format version, an integer from 1. Bumped with every change the data of the version before cannot be read as. |
+| `selectedTimerId` | The id of the chosen timer. Must be the id of a timer in `timers`; otherwise the first timer. |
+| `timers` | The timer library. At least one timer. |
+| `sounds` | The sound library. At least one sound. |
+| `state` | The live timer: idle, running or paused. Dropped to idle on every version change. |
+### Timer
+
+| Field | Meaning |
+|---|---|
+| `id` | Never changes: `timer` for the default timer, a random UUID for the others. |
+| `name` | Shown to the user. Unique among timers, ignoring case. |
+| `steps` | At least one step. They ring one after the other without a gap. |
+
+### Step
+
+| Field | Meaning |
+|---|---|
+| `seconds` | Length of the step. Greater than 0, at most 9:59:59 (35999). |
+| `soundId` | The id of a sound in `sounds`. Not a copy: an edit of the sound reaches every step. A missing id plays the first sound. |
+| `volumeDb` | Loudness of the bell relative to the sound, in dB. 0 or less: the app can only make a sound quieter. |
+
+### Sound
+
+| Field | Meaning |
+|---|---|
+| `id` | Never changes: the type's word for the four default sounds, a random UUID for the others. |
+| `name` | Shown to the user. Unique among sounds, ignoring case. |
+| `type` | The synthesizer recipe: `piano`, `bell`, `flute` or `string`. |
+| `note` | MIDI note number; 60 is C4, 262 Hz. |
+| `rise` | Seconds the loudness grows before the sound starts to fade; 0 leaves only the soft start of the type. |
+| `length` | Seconds to fade by 60 dB after the rise. |
+
+### State
+
+| Field | Meaning |
+|---|---|
+| `type` | `idle`, `running` or `paused`. `idle` has no other fields. |
+| `startedAt` | When the first step began. The progress of a step is measured from it or from the bell before. |
+| `pausedAt` | Paused only. When Pause was pressed; the bells keep their times and the time left is measured from it. |
+| `bells` | One per step, in order, as handed to Android at Start. At least one. |
+
+### Bell
+
+| Field | Meaning |
+|---|---|
+| `dueAt` | When the bell rings. |
+| `sound` | A copy of the step's sound as it was at Start, so a later edit or deletion in the library does not change the bell (spec 1.10). |
+| `volumeDb` | The step's volume at Start. |
+
+## Changing the format
+
+Every change of the shape above, a renamed field included, takes four things in one commit:
+
+1. Bump `version`.
+2. Add the migration step from the version before. A step works on the JSON tree only, never on the Kotlin classes:
+   the classes describe the current version and will move on, the step must keep working.
+3. Freeze the new JSON in the tests and keep the old one as the input of the step's test.
+4. Update the example and the tables here.

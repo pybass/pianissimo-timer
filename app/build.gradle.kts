@@ -60,7 +60,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.13.0")
     // Not used directly. The BOM's lifecycle 2.9.4 ships lint checks that the current lint rejects as obsolete.
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-    implementation("androidx.datastore:datastore-preferences:1.3.0")
+    implementation("androidx.datastore:datastore:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
 
     // Unit tests run on the computer's JVM, not on a device. kotlin-test gives assertEquals and friends in Kotlin;

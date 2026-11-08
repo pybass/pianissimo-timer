@@ -25,7 +25,7 @@ class BellActionReceiver : BroadcastReceiver() {
         runBlocking {
             // A button that does not fit the state is ignored: the notification may lag a moment behind a change made
             // in the app, so Pause may arrive for a timer that is already paused.
-            when (val state = store.state.first()) {
+            when (val state = store.data.first().state) {
                 is TimerState.Running -> when (intent.action) {
                     ACTION_PAUSE -> store.pause(state)
 
@@ -35,7 +35,7 @@ class BellActionReceiver : BroadcastReceiver() {
                         val now = System.currentTimeMillis()
                         val step = state.step(now)
                         // Once every bell is due there is nothing left to wait for.
-                        val due = state.bells[step].due
+                        val due = state.bells[step].dueAt
                         if (due > now) showWaitingNotification(context, due, stepsLeft = state.bells.size - step)
                     }
                 }

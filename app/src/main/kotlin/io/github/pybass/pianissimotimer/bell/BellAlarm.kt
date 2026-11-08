@@ -13,10 +13,10 @@ import android.content.Intent
 fun scheduleBells(context: Context, bells: List<Bell>, from: Int) {
     val alarms = context.getSystemService(AlarmManager::class.java)
     for (i in from..bells.lastIndex) {
-        val intent = bellIntent(context, i, bells[i], nextDue = bells.getOrNull(i + 1)?.due, stepsLeft = bells.lastIndex - i)
-        alarms.setAlarmClock(AlarmManager.AlarmClockInfo(bells[i].due, null), intent)
+        val intent = bellIntent(context, i, bells[i], nextDue = bells.getOrNull(i + 1)?.dueAt, stepsLeft = bells.lastIndex - i)
+        alarms.setAlarmClock(AlarmManager.AlarmClockInfo(bells[i].dueAt, null), intent)
     }
-    showWaitingNotification(context, bells[from].due, stepsLeft = bells.size - from)
+    showWaitingNotification(context, bells[from].dueAt, stepsLeft = bells.size - from)
 }
 
 // Cancels the scheduled bells and silences one that is ringing. `cancelAll` drops every alarm of the app, so no bell

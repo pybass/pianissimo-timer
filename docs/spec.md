@@ -91,8 +91,7 @@ Intelligence" in the shade and in the open Now bar card. Checked on One UI 9.0; 
 than zero. Timer names are unique, ignoring case. — why: a 0:00 step would ring together with the one before it.
 
 5.2 A step names its sound; it does not keep a copy. A step whose sound was deleted shows and plays the first sound
-in the library; so does a step whose sound was renamed from another step's screen. — why: an edit of a sound in the
-library must reach every timer that uses it.
+in the library. — why: an edit of a sound in the library must reach every timer that uses it.
 
 5.3 Start hands Android one bell per step, all at once; the ring of a step schedules nothing. — why: a chain built
 at each ring breaks when one link fails.

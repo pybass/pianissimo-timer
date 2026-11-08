@@ -29,19 +29,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
 import io.github.pybass.pianissimotimer.sound.Sound
-import io.github.pybass.pianissimotimer.sound.SoundLibrary
 import io.github.pybass.pianissimotimer.ui.theme.Action
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
 import io.github.pybass.pianissimotimer.ui.theme.Sheet
 import kotlinx.coroutines.launch
 
-// The saved sounds, `selected` marked. Each has its own speaker, so the user can compare them by ear without leaving
-// the list.
+// The saved sounds, the one with the id `selected` marked; `onSelect` gets a sound's id. Each has its own speaker, so
+// the user can compare them by ear without leaving the list.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SoundSheet(
-    library: SoundLibrary,
+    sounds: List<Sound>,
     selected: String,
     onSelect: (String) -> Unit,
     onNewSound: () -> Unit,
@@ -62,14 +61,14 @@ fun SoundSheet(
     ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState, containerColor = Sheet) {
         Column(Modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
             Text("Sound", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-            for (sound in library.sounds) {
-                val chosen = sound.name == selected
+            for (sound in sounds) {
+                val chosen = sound.id == selected
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .height(64.dp)
                         .selectable(selected = chosen, role = Role.RadioButton) {
-                            onSelect(sound.name)
+                            onSelect(sound.id)
                             close()
                         },
                     horizontalArrangement = Arrangement.spacedBy(14.dp),

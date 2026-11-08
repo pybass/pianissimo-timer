@@ -1,33 +1,57 @@
 package io.github.pybass.pianissimotimer.data
 
-import android.content.Context
-import androidx.datastore.core.DataMigration
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import io.github.pybass.pianissimotimer.bell.cancelBells
+import io.github.pybass.pianissimotimer.sound.DefaultSounds
+import io.github.pybass.pianissimotimer.sound.Sound
+import io.github.pybass.pianissimotimer.timer.DefaultTimer
+import io.github.pybass.pianissimotimer.timer.Timer
+import io.github.pybass.pianissimotimer.timer.TimerState
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import java.util.UUID
 
-// Everything the app saves, in one file. One store per file in the whole app: a second DataStore on the same file
-// throws. DataStore runs the migration once, before the first read or write sees the data.
-internal val Context.appData by preferencesDataStore("pianissimo", produceMigrations = { listOf(Upgrade(it)) })
+// The version of the saved format: the shape of the document below. Bump it with every change that the data of the
+// version before cannot be read as; docs/data.md lists what else such a change takes.
+internal const val FORMAT_VERSION = 1
 
-// The keys of the file. Each library and the state is one JSON string, so each change is atomic.
-internal val TIMERS = stringPreferencesKey("timers")
-internal val SOUNDS = stringPreferencesKey("sounds")
-internal val STATE = stringPreferencesKey("state")
-internal val VERSION = intPreferencesKey("version")
-
-// Runs `upgrade` on the saved data and cancels the bells of a state it dropped: an Idle app must not ring.
-private class Upgrade(private val context: Context) : DataMigration<Preferences> {
-    // Every launch: the data is read back and checked even when its version is current.
-    override suspend fun shouldMigrate(currentData: Preferences) = true
-
-    override suspend fun migrate(currentData: Preferences): Preferences {
-        val upgraded = upgrade(currentData)
-        if (upgraded.stateDropped) cancelBells(context)
-        return upgraded.data
-    }
-
-    override suspend fun cleanUp() = Unit
+// The JSON of the saved file and of the bell Android carries.
+// encodeDefaults: without it a field equal to its default is left out, and a later change of a default would silently
+// change the saved data. ignoreUnknownKeys: JSON saved before a field was removed still reads.
+internal val json = Json {
+    encodeDefaults = true
+    ignoreUnknownKeys = true
 }
+
+// The id of a timer or sound the user makes. The defaults have fixed ids instead.
+fun newId(): String = UUID.randomUUID().toString()
+
+// Everything the app saves, as one JSON document; docs/data.md shows it with every field explained. Timers and
+// sounds are referenced by id, never by name. There is always at least one timer and one sound, and
+// `selectedTimerId` is the id of a timer in `timers`.
+@Serializable
+data class AppData(
+    val version: Int = FORMAT_VERSION,
+    val selectedTimerId: String,
+    val timers: List<Timer>,
+    val sounds: List<Sound>,
+    val state: TimerState = TimerState.Idle,
+) {
+    val selectedTimer get() = timers.first { it.id == selectedTimerId }
+
+    // Names are unique within their list, ignoring case.
+    fun isTimerNameTaken(name: String) = timers.any { it.name.equals(name, ignoreCase = true) }
+
+    fun isSoundNameTaken(name: String) = sounds.any { it.name.equals(name, ignoreCase = true) }
+
+    // "Timer", then "Timer 2" and on, skipping taken names.
+    fun newTimerName() = newName("Timer", ::isTimerNameTaken)
+
+    fun newSoundName() = newName("Sound", ::isSoundNameTaken)
+
+    companion object {
+        // A fresh install: the default timer and sounds, idle.
+        val Default = AppData(selectedTimerId = DefaultTimer.id, timers = listOf(DefaultTimer), sounds = DefaultSounds)
+    }
+}
+
+private fun newName(base: String, isTaken: (String) -> Boolean) =
+    generateSequence(1) { it + 1 }.map { if (it == 1) base else "$base $it" }.first { !isTaken(it) }

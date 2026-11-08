@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun CountdownScreen(running: TimerState.Running, onPause: () -> Unit, onStop: () -> Unit, onDone: () -> Unit) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    val last = running.bells.last().due
+    val last = running.bells.last().dueAt
     // The time left is derived from the bells' times, not counted down: Android pauses the app with the screen off,
     // and a counter would fall behind.
     LaunchedEffect(last) {
@@ -31,9 +31,9 @@ fun CountdownScreen(running: TimerState.Running, onPause: () -> Unit, onStop: ()
     val step = running.step(now)
     RunLayout(
         bells = running.bells,
-        start = running.start,
+        start = running.startedAt,
         step = step,
-        left = running.bells[step].due - now,
+        left = running.bells[step].dueAt - now,
         leftInAll = last - now,
         paused = false,
         primary = "Pause",

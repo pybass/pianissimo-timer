@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
 import io.github.pybass.pianissimotimer.sound.Sound
-import io.github.pybass.pianissimotimer.sound.SoundLibrary
 import io.github.pybass.pianissimotimer.timer.Step
 import io.github.pybass.pianissimotimer.ui.components.PillButton
 import io.github.pybass.pianissimotimer.ui.components.SoundBar
@@ -52,7 +51,7 @@ fun StepScreen(
     number: Int,
     step: Step,
     onChange: (Step) -> Unit,
-    sounds: SoundLibrary,
+    sounds: List<Sound>,
     onNewSound: () -> Unit,
     onEditSound: (Sound) -> Unit,
     onListen: (Sound) -> Unit,
@@ -105,8 +104,8 @@ fun StepScreen(
             HorizontalDivider(color = Ink.copy(alpha = 0.12f))
             SoundBar(
                 sounds,
-                step.sound,
-                onSelect = { onChange(step.copy(sound = it)) },
+                step.soundId,
+                onSelect = { onChange(step.copy(soundId = it)) },
                 onNewSound,
                 onEditSound,
                 step.volumeDb,
