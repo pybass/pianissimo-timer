@@ -36,7 +36,7 @@ Requires Android 16 or newer. The app is not on Google Play. Install it from a f
 
 To update, install a newer `.apk` the same way.
 
-Early version: screens, saved timers and sounds may change between releases.
+Early version: screens may change between releases. Saved timers and sounds survive an update.
 
 ## How it works
 

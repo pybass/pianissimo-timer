@@ -7,8 +7,10 @@ or to avoid a mistake — no preamble, no recap, no filler. Go into detail only 
 
 All code, comments, commit messages, and files must ALWAYS be in English — no exceptions.
 
-## Prototype mode
-The project is a prototype. Do not write tests unless the user asks for them in the task.
+## Tests: the saved data only
+The app is in use, so an update must never lose the user's timers and sounds. The saved format and its migrations
+(package `data`) have thorough unit tests in `app/src/test`; every change there comes with tests, and `just check`
+runs them. Do not write tests for the rest of the app unless the user asks for them in the task.
 
 ## Android 16+ only
 The app requires Android 16 (API 36) or newer, set by `minSdk` in `app/build.gradle.kts`. Use current platform
@@ -43,5 +45,7 @@ The user is new to Kotlin and Android development and wants to understand every 
 ## Project Reading (context)
 - [docs/spec.md](docs/spec.md) — behavioral spec (normative): the non-obvious rules the app must keep.
   Read it before the first task. Keep it short; its header says what belongs there.
+- [docs/data.md](docs/data.md) — the saved file: one JSON example and the meaning of every field. Read it before a
+  change in package `data`.
 - [docs/rejected.md](docs/rejected.md) — ideas the user decided against, each with its reason. Do not propose one
   again unless its reason no longer holds.

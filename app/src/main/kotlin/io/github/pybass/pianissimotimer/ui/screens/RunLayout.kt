@@ -74,8 +74,8 @@ fun RunLayout(
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.weight(1f))
-            val from = if (step == 0) start else bells[step - 1].due
-            val length = bells[step].due - from
+            val from = if (step == 0) start else bells[step - 1].dueAt
+            val length = bells[step].dueAt - from
             ProgressArc(progress = if (length > 0) (1 - left.toFloat() / length).coerceIn(0f, 1f) else 1f, paused)
             TimeText(formatLeft(left), muted = paused)
             // The only step has no list under the time to name its sound, so the caption does.
@@ -88,8 +88,8 @@ fun RunLayout(
                 Column(Modifier.width(StepsWidth).verticalScroll(scroll)) {
                     bells.forEachIndexed { i, bell ->
                         if (i > 0) HorizontalDivider(color = Ink.copy(alpha = 0.12f))
-                        val from = if (i == 0) start else bells[i - 1].due
-                        BellRow(i, bell, seconds = ((bell.due - from) / 1000).toInt(), done = i < step, current = i == step)
+                        val from = if (i == 0) start else bells[i - 1].dueAt
+                        BellRow(i, bell, seconds = ((bell.dueAt - from) / 1000).toInt(), done = i < step, current = i == step)
                     }
                 }
             }

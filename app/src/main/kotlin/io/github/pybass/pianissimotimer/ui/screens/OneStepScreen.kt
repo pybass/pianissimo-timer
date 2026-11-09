@@ -18,11 +18,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.pybass.pianissimotimer.data.AppData
 import io.github.pybass.pianissimotimer.sound.Sound
-import io.github.pybass.pianissimotimer.sound.SoundLibrary
 import io.github.pybass.pianissimotimer.timer.Step
 import io.github.pybass.pianissimotimer.timer.Timer
-import io.github.pybass.pianissimotimer.timer.TimerLibrary
 import io.github.pybass.pianissimotimer.ui.components.AddStepRow
 import io.github.pybass.pianissimotimer.ui.components.PillButton
 import io.github.pybass.pianissimotimer.ui.components.SoundBar
@@ -38,14 +37,14 @@ import io.github.pybass.pianissimotimer.ui.theme.StepsWidth
 // Start waits for a time (docs/spec.md 5.1).
 @Composable
 fun OneStepScreen(
-    timers: TimerLibrary,
+    data: AppData,
     onSelectTimer: (String) -> Unit,
     onNewTimer: () -> Unit,
     onRenameTimer: (Timer, String) -> Unit,
     onDeleteTimer: (Timer) -> Unit,
     step: Step,
     onChange: (Step) -> Unit,
-    sounds: SoundLibrary,
+    sounds: List<Sound>,
     onNewSound: () -> Unit,
     onEditSound: (Sound) -> Unit,
     onListen: (Sound) -> Unit,
@@ -53,9 +52,9 @@ fun OneStepScreen(
     onStart: () -> Unit,
 ) {
     // The time on the wheel, kept apart from the saved seconds: the step keeps its last time while the wheel shows
-    // 0:00:00. Keyed by the timer's name: this screen stays on while another timer is chosen, and the wheel must then
+    // 0:00:00. Keyed by the timer's id: this screen stays on while another timer is chosen, and the wheel must then
     // show that timer's time, not the old one.
-    var seconds by rememberSaveable(timers.selected) { mutableStateOf(step.seconds) }
+    var seconds by rememberSaveable(data.selectedTimerId) { mutableStateOf(step.seconds) }
 
     fun turn(new: Int) {
         seconds = new
@@ -65,15 +64,15 @@ fun OneStepScreen(
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.weight(1f))
-            TimerPicker(timers, onSelectTimer, onNewTimer, onRenameTimer, onDeleteTimer)
+            TimerPicker(data, onSelectTimer, onNewTimer, onRenameTimer, onDeleteTimer)
             TimeWheel(seconds) { turn(it) }
             Spacer(Modifier.height(16.dp))
             Column(Modifier.width(StepsWidth)) {
                 HorizontalDivider(color = Ink.copy(alpha = 0.12f))
                 SoundBar(
                     sounds,
-                    step.sound,
-                    onSelect = { onChange(step.copy(sound = it)) },
+                    step.soundId,
+                    onSelect = { onChange(step.copy(soundId = it)) },
                     onNewSound,
                     onEditSound,
                     step.volumeDb,

@@ -3,8 +3,8 @@ package io.github.pybass.pianissimotimer.bell
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import io.github.pybass.pianissimotimer.data.AppDataStore
 import io.github.pybass.pianissimotimer.timer.TimerState
-import io.github.pybass.pianissimotimer.timer.TimerStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -20,12 +20,12 @@ const val ACTION_SHOW = "show"
 // gives it a few seconds. The store does the work, so the buttons and the screen keep the state the same way.
 class BellActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val store = TimerStore(context.applicationContext)
+        val store = AppDataStore(context.applicationContext)
         // onReceive cannot suspend and must return at once; the store's read and write take milliseconds.
         runBlocking {
             // A button that does not fit the state is ignored: the notification may lag a moment behind a change made
             // in the app, so Pause may arrive for a timer that is already paused.
-            when (val state = store.state.first()) {
+            when (val state = store.data.first().state) {
                 is TimerState.Running -> when (intent.action) {
                     ACTION_PAUSE -> store.pause(state)
 
@@ -35,7 +35,7 @@ class BellActionReceiver : BroadcastReceiver() {
                         val now = System.currentTimeMillis()
                         val step = state.step(now)
                         // Once every bell is due there is nothing left to wait for.
-                        val due = state.bells[step].due
+                        val due = state.bells[step].dueAt
                         if (due > now) showWaitingNotification(context, due, stepsLeft = state.bells.size - step)
                     }
                 }

@@ -1,13 +1,13 @@
 package io.github.pybass.pianissimotimer.bell
 
+import io.github.pybass.pianissimotimer.data.json
 import io.github.pybass.pianissimotimer.sound.Sound
-import io.github.pybass.pianissimotimer.sound.json
 import kotlinx.serialization.Serializable
 
 // A bell as Android carries it: when it rings, in ms since the epoch, and what it plays. The sound is a copy, so the
 // bell rings as it was at Start even if the library changes later (docs/spec.md 1.10). `volumeDb` is 0 or less.
 @Serializable
-data class Bell(val due: Long, val sound: Sound, val volumeDb: Int) {
+data class Bell(val dueAt: Long, val sound: Sound, val volumeDb: Int) {
     fun toJson() = json.encodeToString(this)
 
     companion object {

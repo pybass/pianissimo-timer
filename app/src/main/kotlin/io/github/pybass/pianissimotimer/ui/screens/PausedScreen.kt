@@ -9,7 +9,7 @@ import io.github.pybass.pianissimotimer.timer.TimerState
 fun PausedScreen(paused: TimerState.Paused, onResume: () -> Unit, onStop: () -> Unit) {
     RunLayout(
         bells = paused.bells,
-        start = paused.start,
+        start = paused.startedAt,
         step = paused.step,
         left = paused.left,
         leftInAll = paused.leftInAll,

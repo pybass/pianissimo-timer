@@ -20,17 +20,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
+import io.github.pybass.pianissimotimer.data.AppData
 import io.github.pybass.pianissimotimer.timer.Timer
-import io.github.pybass.pianissimotimer.timer.TimerLibrary
 import io.github.pybass.pianissimotimer.ui.theme.ContentWidth
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
 
 // The name of the chosen timer; a tap opens the list of saved timers, where any timer can be renamed or deleted.
-// `onSelect` gets a timer's name; `onRename` gets the timer and its new name, trimmed and not taken.
+// `onSelect` gets a timer's id; `onRename` gets the timer and its new name, trimmed and not taken.
 @Composable
 fun TimerPicker(
-    library: TimerLibrary,
+    data: AppData,
     onSelect: (String) -> Unit,
     onNew: () -> Unit,
     onRename: (Timer, String) -> Unit,
@@ -45,7 +45,7 @@ fun TimerPicker(
         colors = ButtonDefaults.textButtonColors(contentColor = Ink),
     ) {
         Text(
-            library.selected,
+            data.selectedTimer.name,
             Modifier.weight(1f, fill = false),
             fontSize = 17.sp,
             maxLines = 1,
@@ -58,13 +58,13 @@ fun TimerPicker(
             tint = Muted,
         )
     }
-    if (choosing) TimerSheet(library, onSelect, onNew, onEdit = { editing = it }, onClose = { choosing = false })
+    if (choosing) TimerSheet(data, onSelect, onNew, onEdit = { editing = it }, onClose = { choosing = false })
     val timer = editing
     if (timer != null) {
         RenameDialog(
             current = timer.name,
             // The timer's own name is free for it, so a rename may change only the case.
-            isTaken = { !it.equals(timer.name, ignoreCase = true) && library.isTaken(it) },
+            isTaken = { !it.equals(timer.name, ignoreCase = true) && data.isTimerNameTaken(it) },
             onDone = {
                 onRename(timer, it)
                 editing = null
@@ -74,7 +74,7 @@ fun TimerPicker(
                 onDelete(timer)
                 editing = null
             },
-            canDelete = library.timers.size > 1,
+            canDelete = data.timers.size > 1,
         )
     }
 }

@@ -22,11 +22,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.pybass.pianissimotimer.data.AppData
 import io.github.pybass.pianissimotimer.formatSeconds
-import io.github.pybass.pianissimotimer.sound.SoundLibrary
+import io.github.pybass.pianissimotimer.sound.Sound
+import io.github.pybass.pianissimotimer.sound.soundFor
 import io.github.pybass.pianissimotimer.timer.Step
 import io.github.pybass.pianissimotimer.timer.Timer
-import io.github.pybass.pianissimotimer.timer.TimerLibrary
 import io.github.pybass.pianissimotimer.ui.components.AddStepRow
 import io.github.pybass.pianissimotimer.ui.components.ListenButton
 import io.github.pybass.pianissimotimer.ui.components.PillButton
@@ -44,26 +45,25 @@ import io.github.pybass.pianissimotimer.ui.theme.TimeStyle
 // screen.
 @Composable
 fun TimerScreen(
-    timers: TimerLibrary,
+    data: AppData,
     onSelectTimer: (String) -> Unit,
     onNewTimer: () -> Unit,
     onRenameTimer: (Timer, String) -> Unit,
     onDeleteTimer: (Timer) -> Unit,
-    sounds: SoundLibrary,
     stepsScroll: ScrollState,
     onEditStep: (Int) -> Unit,
     onAddStep: () -> Unit,
     onListen: (Int) -> Unit,
     onStart: () -> Unit,
 ) {
-    val timer = timers.selectedTimer
+    val timer = data.selectedTimer
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         // Everything above Start. It gets the height Start leaves, so a long list cannot push Start off the screen.
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             // The two spacers share the free height 1 to 2, so the time and the steps sit a little above the middle.
             Spacer(Modifier.weight(1f))
             // The name is a caption to the time, so the two stay close.
-            TimerPicker(timers, onSelectTimer, onNewTimer, onRenameTimer, onDeleteTimer)
+            TimerPicker(data, onSelectTimer, onNewTimer, onRenameTimer, onDeleteTimer)
             TimeText(formatSeconds(timer.seconds))
             Spacer(Modifier.height(28.dp))
             StepBar(timer.steps)
@@ -74,7 +74,7 @@ fun TimerScreen(
             Column(Modifier.width(StepsWidth).verticalScroll(stepsScroll)) {
                 timer.steps.forEachIndexed { i, step ->
                     if (i > 0) HorizontalDivider(color = Ink.copy(alpha = 0.12f))
-                    StepRow(i, step, sounds, onClick = { onEditStep(i) }, onListen = { onListen(i) })
+                    StepRow(i, step, data.sounds, onClick = { onEditStep(i) }, onListen = { onListen(i) })
                 }
                 HorizontalDivider(color = Ink.copy(alpha = 0.12f))
                 AddStepRow(onAddStep)
@@ -88,7 +88,7 @@ fun TimerScreen(
 }
 
 @Composable
-private fun StepRow(index: Int, step: Step, sounds: SoundLibrary, onClick: () -> Unit, onListen: () -> Unit) {
+private fun StepRow(index: Int, step: Step, sounds: List<Sound>, onClick: () -> Unit, onListen: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().height(56.dp).clickable(onClick = onClick),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -109,7 +109,7 @@ private fun StepRow(index: Int, step: Step, sounds: SoundLibrary, onClick: () ->
             style = TimeStyle,
         )
         Text(
-            sounds.soundFor(step.sound).name,
+            sounds.soundFor(step.soundId).name,
             Modifier.weight(1f),
             color = Ink,
             fontSize = 16.sp,

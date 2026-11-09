@@ -30,9 +30,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
+import io.github.pybass.pianissimotimer.data.AppData
 import io.github.pybass.pianissimotimer.formatSeconds
 import io.github.pybass.pianissimotimer.timer.Timer
-import io.github.pybass.pianissimotimer.timer.TimerLibrary
 import io.github.pybass.pianissimotimer.ui.theme.Action
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
@@ -42,16 +42,10 @@ import io.github.pybass.pianissimotimer.ui.theme.TimeStyle
 import kotlinx.coroutines.launch
 
 // The saved timers with their total times, the chosen one marked. A timer of several steps lists their lengths too.
-// The pencil of a row closes the sheet, then `onEdit` gets its timer.
+// `onSelect` gets a timer's id. The pencil of a row closes the sheet, then `onEdit` gets its timer.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TimerSheet(
-    library: TimerLibrary,
-    onSelect: (String) -> Unit,
-    onNew: () -> Unit,
-    onEdit: (Timer) -> Unit,
-    onClose: () -> Unit,
-) {
+fun TimerSheet(data: AppData, onSelect: (String) -> Unit, onNew: () -> Unit, onEdit: (Timer) -> Unit, onClose: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
@@ -65,8 +59,8 @@ fun TimerSheet(
     ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState, containerColor = Sheet) {
         Column(Modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
             Text("Timer", color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Medium)
-            for (timer in library.timers) {
-                val chosen = timer.name == library.selected
+            for (timer in data.timers) {
+                val chosen = timer.id == data.selectedTimerId
                 // A one-step timer has nothing to list: its row stays one line, so the taller rows mark the chains.
                 val steps = timer.steps.size > 1
                 Row(
@@ -74,7 +68,7 @@ fun TimerSheet(
                         .fillMaxWidth()
                         .height(if (steps) 64.dp else 56.dp)
                         .selectable(selected = chosen, role = Role.RadioButton) {
-                            onSelect(timer.name)
+                            onSelect(timer.id)
                             close()
                         },
                     horizontalArrangement = Arrangement.spacedBy(14.dp),

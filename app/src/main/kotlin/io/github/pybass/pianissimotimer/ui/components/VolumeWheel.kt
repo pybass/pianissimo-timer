@@ -34,12 +34,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
+import io.github.pybass.pianissimotimer.timer.VolumeDbRange
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
 import kotlin.math.abs
 
 // 0 dB plays the sound as made; the app can only turn it down.
-private val VolumeSteps = (0 downTo -45 step 3).toList()
+private val VolumeSteps = (VolumeDbRange.last downTo VolumeDbRange.first step 3).toList()
 
 private val WheelItemHeight = 24.dp
 
