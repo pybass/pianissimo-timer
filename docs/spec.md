@@ -96,6 +96,11 @@ in the library. — why: an edit of a sound in the library must reach every time
 5.3 Start hands Android one bell per step, all at once; the ring of a step schedules nothing. — why: a chain built
 at each ring breaks when one link fails.
 
+5.4 A timer of one step has no step screen: its time, sound and volume are set on the main screen, as in a plain
+timer app. From two steps on, the main screen shows the list and a step opens on its own screen; deleting down to
+one step goes back to the plain form. — why: most timers are one step, and a list of one plus a second screen would
+only add taps.
+
 ## 6. Saved data
 
 6.1 An update never loses the timers and sounds the user made: data saved by any earlier version is brought to the

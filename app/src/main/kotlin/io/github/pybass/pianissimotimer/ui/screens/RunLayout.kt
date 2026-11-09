@@ -78,7 +78,6 @@ fun RunLayout(
             val length = bells[step].dueAt - from
             ProgressArc(progress = if (length > 0) (1 - left.toFloat() / length).coerceIn(0f, 1f) else 1f, paused)
             TimeText(formatLeft(left), muted = paused)
-            // The only step has no list under the time to name its sound, so the caption does.
             val about = if (bells.size == 1) "${bells[0].sound.name} at the end" else "${formatLeft(leftInAll)} in all"
             val parts = listOfNotNull("Paused".takeIf { paused }, about)
             Text(parts.joinToString(", "), color = Muted, fontSize = 15.sp, style = TextStyle(fontFeatureSettings = "tnum"))

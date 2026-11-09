@@ -11,6 +11,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -65,7 +66,8 @@ fun OneStepScreen(
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.weight(1f))
             TimerPicker(data, onSelectTimer, onNewTimer, onRenameTimer, onDeleteTimer)
-            TimeWheel(seconds) { turn(it) }
+            // The wheel reads its time once, when it is built; a new timer must build a new wheel.
+            key(data.selectedTimerId) { TimeWheel(seconds) { turn(it) } }
             Spacer(Modifier.height(16.dp))
             Column(Modifier.width(StepsWidth)) {
                 HorizontalDivider(color = Ink.copy(alpha = 0.12f))
