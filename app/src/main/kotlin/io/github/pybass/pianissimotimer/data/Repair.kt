@@ -16,7 +16,7 @@ import io.github.pybass.pianissimotimer.timer.newStep
 
 // A saved value the app would never write gives way to the default of its field, never to the loss of its item or
 // of the library (docs/spec.md 6.2, docs/data.md). Only values are repaired: an item that does not decode at all
-// takes the library down to the default one (AppDataStore.kt), and only a broken migration step could write one.
+// takes the library down to the default one (AppDataSerializer.kt), and only a broken migration step could write one.
 internal fun AppData.repaired(): AppData {
     val sounds = sounds.map { it.repaired() }.withUniqueIds({ it.id }) { s, id -> s.copy(id = id) }.ifEmpty { DefaultSounds }
     val timers = timers.map { it.repaired(sounds.first().id) }.withUniqueIds({ it.id }) { t, id -> t.copy(id = id) }
@@ -26,7 +26,7 @@ internal fun AppData.repaired(): AppData {
 }
 
 // A state is not repaired: its bells are copies made at Start and already stand in Android. One the screens or the
-// player could not use is dropped to idle, and the bells with it (AppDataStore.kt).
+// player could not use is dropped to idle, and the bells with it (AppDataSerializer.kt).
 internal val TimerState.isUsable
     get() = when (this) {
         TimerState.Idle -> true

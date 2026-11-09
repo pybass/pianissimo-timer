@@ -33,14 +33,13 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.data.AppData
+import io.github.pybass.pianissimotimer.data.AppDataStore
 import io.github.pybass.pianissimotimer.data.newId
 import io.github.pybass.pianissimotimer.sound.Sound
 import io.github.pybass.pianissimotimer.sound.SoundPlayer
-import io.github.pybass.pianissimotimer.sound.SoundStore
 import io.github.pybass.pianissimotimer.sound.soundFor
 import io.github.pybass.pianissimotimer.timer.Step
 import io.github.pybass.pianissimotimer.timer.TimerState
-import io.github.pybass.pianissimotimer.timer.TimerStore
 import io.github.pybass.pianissimotimer.timer.newTimer
 import io.github.pybass.pianissimotimer.ui.screens.CountdownScreen
 import io.github.pybass.pianissimotimer.ui.screens.PausedScreen
@@ -61,38 +60,37 @@ private data class Draft(val sound: Sound, val isNew: Boolean)
 @Composable
 fun App(preview: SoundPlayer) {
     val context = LocalContext.current.applicationContext
-    val timerStore = remember { TimerStore(context) }
-    val soundStore = remember { SoundStore(context) }
+    val store = remember { AppDataStore(context) }
     // Null until read from disk.
-    val data by timerStore.data.collectAsState(initial = null)
+    val data by store.data.collectAsState(initial = null)
     Column(Modifier.fillMaxSize().background(Paper).safeDrawingPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
         Header()
         // The screen gets all the height under the header; a screen that does not fill it sits in the middle.
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             // `data` is a delegate, so the compiler cannot narrow it; the local can be checked.
             val d = data
-            if (d != null) Screen(d, timerStore, soundStore, preview)
+            if (d != null) Screen(d, store, preview)
         }
     }
 }
 
 @Composable
-private fun Screen(data: AppData, timerStore: TimerStore, soundStore: SoundStore, preview: SoundPlayer) {
+private fun Screen(data: AppData, store: AppDataStore, preview: SoundPlayer) {
     val scope = rememberCoroutineScope()
     when (val s = data.state) {
-        TimerState.Idle -> IdleScreens(data, timerStore, soundStore, preview)
+        TimerState.Idle -> IdleScreens(data, store, preview)
 
         is TimerState.Running -> CountdownScreen(
             running = s,
-            onPause = { scope.launch { timerStore.pause(s) } },
-            onStop = { scope.launch { timerStore.stop() } },
-            onDone = { scope.launch { timerStore.done() } },
+            onPause = { scope.launch { store.pause(s) } },
+            onStop = { scope.launch { store.stop() } },
+            onDone = { scope.launch { store.done() } },
         )
 
         is TimerState.Paused -> PausedScreen(
             paused = s,
-            onResume = { scope.launch { timerStore.resume(s) } },
-            onStop = { scope.launch { timerStore.stop() } },
+            onResume = { scope.launch { store.resume(s) } },
+            onStop = { scope.launch { store.stop() } },
         )
     }
 }
@@ -100,7 +98,7 @@ private fun Screen(data: AppData, timerStore: TimerStore, soundStore: SoundStore
 // The screens while no timer runs: the chosen timer; over it a step while one is open; over that a sound while a
 // draft is open.
 @Composable
-private fun IdleScreens(data: AppData, timerStore: TimerStore, soundStore: SoundStore, preview: SoundPlayer) {
+private fun IdleScreens(data: AppData, store: AppDataStore, preview: SoundPlayer) {
     val scope = rememberCoroutineScope()
     // The index of the open step; null when none is open.
     var editing by remember { mutableStateOf<Int?>(null) }
@@ -118,28 +116,28 @@ private fun IdleScreens(data: AppData, timerStore: TimerStore, soundStore: Sound
     if (i == null || step == null) {
         TimerScreen(
             data = data,
-            onSelectTimer = { scope.launch { timerStore.select(it) } },
+            onSelectTimer = { scope.launch { store.selectTimer(it) } },
             // A new timer takes the first sound in the library: it always exists.
-            onNewTimer = { scope.launch { timerStore.add(newTimer(newId(), data.newTimerName(), sounds.first().id)) } },
-            onRenameTimer = { t, name -> scope.launch { timerStore.replace(t.copy(name = name)) } },
-            onDeleteTimer = { scope.launch { timerStore.delete(it.id) } },
+            onNewTimer = { scope.launch { store.addTimer(newTimer(newId(), data.newTimerName(), sounds.first().id)) } },
+            onRenameTimer = { t, name -> scope.launch { store.replaceTimer(t.copy(name = name)) } },
+            onDeleteTimer = { scope.launch { store.deleteTimer(it.id) } },
             stepsScroll = stepsScroll,
             onEditStep = { editing = it },
             // A new step is a copy of the last one, time included: a step is never stored with 0:00 (docs/spec.md 5.1).
             // It opens only once it is saved, so the step screen finds it in the timer.
             onAddStep = {
                 scope.launch {
-                    timerStore.replace(timer.copy(steps = timer.steps + timer.steps.last()))
+                    store.replaceTimer(timer.copy(steps = timer.steps + timer.steps.last()))
                     editing = timer.steps.size
                 }
             },
             onListen = { timer.steps[it].let { step -> preview.play(sounds.soundFor(step.soundId), step.volumeDb) } },
-            onStart = { scope.launch { timerStore.start(timer, sounds) } },
+            onStart = { scope.launch { store.start(timer, sounds) } },
         )
         return
     }
 
-    suspend fun saveStep(new: Step) = timerStore.replace(timer.withStep(i, new))
+    suspend fun saveStep(new: Step) = store.replaceTimer(timer.withStep(i, new))
     if (d == null) {
         StepScreen(
             timerName = timer.name,
@@ -157,7 +155,7 @@ private fun IdleScreens(data: AppData, timerStore: TimerStore, soundStore: Sound
             // The screen closes first: with the step gone, its index would point past the end.
             onDelete = {
                 editing = null
-                scope.launch { timerStore.replace(timer.withoutStep(i)) }
+                scope.launch { store.replaceTimer(timer.withoutStep(i)) }
             },
             canDelete = timer.steps.size > 1,
             onDone = { editing = null },
@@ -174,7 +172,7 @@ private fun IdleScreens(data: AppData, timerStore: TimerStore, soundStore: Sound
         // so Save keeps it.
         onRename = { name ->
             val renamed = d.sound.copy(name = name)
-            scope.launch { soundStore.replace(renamed) }
+            scope.launch { store.replaceSound(renamed) }
             draft = d.copy(sound = renamed)
         },
         // The editor closes once the change is saved, so the step screen already shows it. A new sound becomes the
@@ -182,17 +180,17 @@ private fun IdleScreens(data: AppData, timerStore: TimerStore, soundStore: Sound
         onSave = { sound ->
             scope.launch {
                 if (d.isNew) {
-                    soundStore.add(sound)
+                    store.addSound(sound)
                     saveStep(step.copy(soundId = sound.id))
                 } else {
-                    soundStore.replace(sound)
+                    store.replaceSound(sound)
                 }
                 draft = null
             }
         },
         onDelete = {
             scope.launch {
-                soundStore.delete(d.sound.id)
+                store.deleteSound(d.sound.id)
                 draft = null
             }
         },
