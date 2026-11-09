@@ -34,6 +34,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.R
+import io.github.pybass.pianissimotimer.sound.FadeInRange
+import io.github.pybass.pianissimotimer.sound.LengthRange
+import io.github.pybass.pianissimotimer.sound.NoteRange
 import io.github.pybass.pianissimotimer.sound.Sound
 import io.github.pybass.pianissimotimer.sound.SoundType
 import io.github.pybass.pianissimotimer.ui.components.ListenButton
@@ -125,15 +128,18 @@ fun SoundScreen(
                 }
             }
         }
-        // C2 to C6; the slider stops on whole notes only.
-        SettingSlider("Pitch", noteName(sound.note), sound.note.toDouble(), 36f..84f, steps = 47, onDone = listen) {
+        // The slider stops on whole notes only: a stop for every note but the two ends.
+        val notes = NoteRange.count() - 2
+        SettingSlider("Pitch", noteName(sound.note), sound.note.toDouble(), NoteRange.asFloat, steps = notes, onDone = listen) {
             sound = sound.copy(note = it.roundToInt())
         }
         // A stop every half second: the ear tells no finer difference in a slow rise.
-        SettingSlider("Rise", "${sound.fadeInSeconds.toText(1)} s", sound.fadeInSeconds, 0f..10f, steps = 19, onDone = listen) {
+        val halves = ((FadeInRange.endInclusive - FadeInRange.start) * 2).toInt() - 1
+        val rise = "${sound.fadeInSeconds.toText(1)} s"
+        SettingSlider("Rise", rise, sound.fadeInSeconds, FadeInRange.asFloat, steps = halves, onDone = listen) {
             sound = sound.copy(fadeInSeconds = (it * 2).roundToInt() / 2.0)
         }
-        SettingSlider("Length", "${sound.lengthSeconds.toText(1)} s", sound.lengthSeconds, 1f..12f, onDone = listen) {
+        SettingSlider("Length", "${sound.lengthSeconds.toText(1)} s", sound.lengthSeconds, LengthRange.asFloat, onDone = listen) {
             sound = sound.copy(lengthSeconds = it)
         }
         // An existing sound saves only changed settings; its name is already saved by the rename. A new sound saves
@@ -180,6 +186,10 @@ fun SoundScreen(
 
 // MIDI numbering: 60 is C4, middle C.
 private fun noteName(note: Int) = NoteNames[note % 12] + (note / 12 - 1)
+
+// The sliders take Float ranges; the settings keep theirs in their own types.
+private val IntRange.asFloat get() = first.toFloat()..last.toFloat()
+private val ClosedFloatingPointRange<Double>.asFloat get() = start.toFloat()..endInclusive.toFloat()
 
 // Rounds for display. Not String.format: it would use the phone's locale, and "4,5" reads oddly next to "s".
 private fun Double.toText(decimals: Int): String {

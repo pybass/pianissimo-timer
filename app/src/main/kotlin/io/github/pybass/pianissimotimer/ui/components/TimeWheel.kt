@@ -21,21 +21,25 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import io.github.pybass.pianissimotimer.timer.StepSecondsRange
 import kotlin.math.abs
 
 private val RowHeight = 84.dp
 
+// The hours wheel ends where the longest step does: 9.
+private val LastHour = StepSecondsRange.last / 3600
+
 // Three wheels, h:mm:ss. The number in the middle of each is the value; the neighbours above and below shrink and
 // fade with their distance, so the time reads as a wheel at rest. `seconds` is the whole time; `onChange` gets the
-// new whole time. The hours cannot pass 9.
+// new whole time.
 @Composable
 fun TimeWheel(seconds: Int, onChange: (Int) -> Unit) {
-    val h = (seconds / 3600).coerceAtMost(9)
+    val h = (seconds / 3600).coerceAtMost(LastHour)
     val m = seconds % 3600 / 60
     val s = seconds % 60
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Hours stay muted while 0: a place not in use.
-        DigitWheel(h, last = 9, digits = 1, mutedZero = true) { onChange(it * 3600 + m * 60 + s) }
+        DigitWheel(h, last = LastHour, digits = 1, mutedZero = true) { onChange(it * 3600 + m * 60 + s) }
         TimeText(":")
         DigitWheel(m, last = 59, digits = 2) { onChange(h * 3600 + it * 60 + s) }
         TimeText(":")

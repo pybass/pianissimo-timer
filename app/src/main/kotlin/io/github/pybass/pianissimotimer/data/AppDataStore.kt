@@ -48,19 +48,24 @@ private class CancelDroppedBells(private val context: Context) : DataMigration<A
 
 // The file's text as the document of the current version. What cannot be read gives way to its default, never to a
 // crash, which would repeat on every launch (docs/spec.md 6.2): the library (timers, sounds and the chosen timer)
-// when it does not read or breaks a rule of docs/data.md; the state when it does not read or was saved by another
-// version (spec 6.3).
-internal fun decode(text: String): AppData {
+// when it does not read, a value in it when it is out of range (Repair.kt), the state when it does not read, cannot
+// be used or was saved by another version (spec 6.3). `to` and `steps` are the chain; only the tests pass their own.
+internal fun decode(text: String, to: Int = FORMAT_VERSION, steps: List<Migration> = MIGRATIONS): AppData {
     val tree = try {
         json.parseToJsonElement(text) as? JsonObject
     } catch (e: IllegalArgumentException) {
         null
     }
     val saved = (tree?.get("version") as? JsonPrimitive)?.intOrNull
-    if (tree == null || saved == null || saved !in 1..FORMAT_VERSION) return AppData.Default.copy(stateDropped = true)
-    val current = migrate(tree, from = saved)
-    val library = section<AppData>(JsonObject(current - "state"))?.takeIf { it.isValid }?.withChosenTimer() ?: AppData.Default
-    val state = if (saved == FORMAT_VERSION) section<TimerState>(current["state"])?.takeIf { it.hasBells } else null
+    if (tree == null || saved == null || saved !in 1..to) return AppData.Default.copy(stateDropped = true)
+    // A step that fails on a tree it did not expect would otherwise crash every launch until the file is gone.
+    val current = try {
+        migrate(tree, from = saved, to = to, steps = steps)
+    } catch (e: RuntimeException) {
+        return AppData.Default.copy(stateDropped = true)
+    }
+    val library = section<AppData>(JsonObject(current - "state"))?.repaired() ?: AppData.Default
+    val state = if (saved == to) section<TimerState>(current["state"])?.takeIf { it.isUsable } else null
     return library.copy(state = state ?: TimerState.Idle, stateDropped = state == null)
 }
 
@@ -72,21 +77,3 @@ private inline fun <reified T> section(element: JsonElement?): T? = element?.let
         null
     }
 }
-
-// The rules of docs/spec.md 5.1 the screens count on: an empty list crashes the pickers, a 0-second step rings with
-// the one before.
-private val AppData.isValid
-    get() = timers.isNotEmpty() && sounds.isNotEmpty() &&
-        timers.all { t -> t.steps.isNotEmpty() && t.steps.all { it.seconds > 0 } }
-
-// A running or paused state with no bells would index past its list on the screen (docs/data.md: at least one).
-private val TimerState.hasBells
-    get() = when (this) {
-        TimerState.Idle -> true
-        is TimerState.Running -> bells.isNotEmpty()
-        is TimerState.Paused -> bells.isNotEmpty()
-    }
-
-// The chosen timer must exist; otherwise the first one (docs/data.md).
-private fun AppData.withChosenTimer() =
-    if (timers.any { it.id == selectedTimerId }) this else copy(selectedTimerId = timers.first().id)

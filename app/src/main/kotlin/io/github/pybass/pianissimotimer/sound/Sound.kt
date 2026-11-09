@@ -38,6 +38,11 @@ data class Sound(
     fun samples() = synthesize(type, note, fadeInSeconds, lengthSeconds)
 }
 
+// The settings the editor offers. A saved value outside is repaired to the field's default (docs/data.md).
+val NoteRange = 36..84 // C2 to C6
+val FadeInRange = 0.0..10.0
+val LengthRange = 1.0..12.0
+
 // The sounds the library starts with, one per type, with fixed ids. Named after their types, as no sound is built in:
 // like any sound, the user may rename, edit or delete them. The notes are G3, C4, E4 and C5, a C major chord, so the
 // steps of one timer agree whatever their sounds. The bell is high and long to let its shimmer be heard; the flute

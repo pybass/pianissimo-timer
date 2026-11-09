@@ -26,14 +26,14 @@ internal object V1 {
         """{"seconds":1500,"soundId":"piano","volumeDb":0},{"seconds":300,"soundId":"bell","volumeDb":-6}]},""" +
         """{"id":"timer","name":"Timer","steps":[{"seconds":1500,"soundId":"piano","volumeDb":0}]}]"""
 
-    // Written out, not `DefaultSounds`: a changed default is not a changed format.
-    private val piano = Sound("piano", "Piano")
-    private val bell = Sound("bell", "Bell", SoundType.BELL, note = 72, lengthSeconds = 8.0)
+    // Every field written out, not `DefaultSounds` or a constructor default: a changed default is not a changed format.
+    private val piano = Sound("piano", "Piano", SoundType.PIANO, note = 60, fadeInSeconds = 0.0, lengthSeconds = 5.0)
+    private val bell = Sound("bell", "Bell", SoundType.BELL, note = 72, fadeInSeconds = 0.0, lengthSeconds = 8.0)
     private val sounds = listOf(
         piano,
         bell,
         Sound("flute", "Flute", SoundType.FLUTE, note = 64, fadeInSeconds = 1.5, lengthSeconds = 4.0),
-        Sound("string", "String", SoundType.STRING, note = 55, lengthSeconds = 6.0),
+        Sound("string", "String", SoundType.STRING, note = 55, fadeInSeconds = 0.0, lengthSeconds = 6.0),
     )
 
     private val bells = listOf(

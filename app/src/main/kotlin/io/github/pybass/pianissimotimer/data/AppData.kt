@@ -10,16 +10,18 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
-// The version of the saved format: the shape of the document below. Bump it with every change that the data of the
-// version before cannot be read as; docs/data.md lists what else such a change takes.
+// The version of the saved format: the shape of the document below. Bump it with every change of a saved field, its
+// meaning or its values, an added field with a default included; docs/data.md lists what else such a change takes.
 internal const val FORMAT_VERSION = 1
 
 // The JSON of the saved file and of the bell Android carries.
 // encodeDefaults: without it a field equal to its default is left out, and a later change of a default would silently
-// change the saved data. ignoreUnknownKeys: JSON saved before a field was removed still reads.
+// change the saved data. ignoreUnknownKeys: JSON saved before a field was removed still reads. coerceInputValues: an
+// enum word the app no longer knows reads as the field's default instead of failing the whole document.
 internal val json = Json {
     encodeDefaults = true
     ignoreUnknownKeys = true
+    coerceInputValues = true
 }
 
 // The id of a timer or sound the user makes. The defaults have fixed ids instead.
