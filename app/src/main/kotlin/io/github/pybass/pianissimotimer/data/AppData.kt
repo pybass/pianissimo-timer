@@ -6,6 +6,7 @@ import io.github.pybass.pianissimotimer.timer.DefaultTimer
 import io.github.pybass.pianissimotimer.timer.Timer
 import io.github.pybass.pianissimotimer.timer.TimerState
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
@@ -34,6 +35,9 @@ data class AppData(
     val timers: List<Timer>,
     val sounds: List<Sound>,
     val state: TimerState = TimerState.Idle,
+    // Not saved. Set by the reader when the saved state did not make it into `state`, so the store can cancel the
+    // bells Android still holds for it (AppDataStore.kt). The screens never see it set.
+    @Transient val stateDropped: Boolean = false,
 ) {
     val selectedTimer get() = timers.first { it.id == selectedTimerId }
 

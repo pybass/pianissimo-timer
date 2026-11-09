@@ -1,8 +1,5 @@
 # Saved data
 
-**Partly built.** The app saves this format; the migration chain and the per-section fallbacks below are not built
-yet.
-
 The rules the format must keep are in [spec.md](spec.md), section 6. This file shows the shape: one example of the
 whole file and the meaning of every field. The frozen JSON in `app/src/test/kotlin/.../data/` is the contract the
 tests check; this example must stay equal to the frozen JSON of the current version.
@@ -10,9 +7,11 @@ tests check; this example must stay equal to the frozen JSON of the current vers
 ## One file
 
 Everything the app saves is one JSON document, written atomically by DataStore (a typed store with a JSON
-serializer, not Preferences). The document carries its own `version`. On every launch the app reads the file,
-runs the migration steps from the saved version up to the current one, then reads every value back and writes it in
-its current form, so a value it cannot read gives way to its default.
+serializer, not Preferences). The document carries its own `version`. On every launch the app reads the file and
+runs the migration steps from the saved version up to the current one. Then it reads the two parts back: the library
+(`selectedTimerId`, `timers`, `sounds`) and the `state`. A library that does not read or breaks a rule below gives way
+to the default one; a state that does not read, or was saved by another version, gives way to idle, and its bells
+are cancelled. A file with no `version`, or one the app does not know, gives way to the defaults as a whole.
 
 Rules of the document:
 
@@ -143,7 +142,8 @@ The other two states:
 Every change of the shape above, a renamed field included, takes four things in one commit:
 
 1. Bump `version`.
-2. Add the migration step from the version before. A step works on the JSON tree only, never on the Kotlin classes:
-   the classes describe the current version and will move on, the step must keep working.
+2. Add the migration step from the version before to `MIGRATIONS` in `Migrations.kt`. A step works on the JSON tree
+   only, never on the Kotlin classes: the classes describe the current version and will move on, the step must keep
+   working. It does not set `version` and does not touch `state`.
 3. Freeze the new JSON in the tests and keep the old one as the input of the step's test.
 4. Update the example and the tables here.
