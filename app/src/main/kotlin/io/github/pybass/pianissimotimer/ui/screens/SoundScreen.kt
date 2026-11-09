@@ -130,11 +130,11 @@ fun SoundScreen(
             sound = sound.copy(note = it.roundToInt())
         }
         // A stop every half second: the ear tells no finer difference in a slow rise.
-        SettingSlider("Rise", "${sound.rise.toText(1)} s", sound.rise, 0f..10f, steps = 19, onDone = listen) {
-            sound = sound.copy(rise = (it * 2).roundToInt() / 2.0)
+        SettingSlider("Rise", "${sound.fadeInSeconds.toText(1)} s", sound.fadeInSeconds, 0f..10f, steps = 19, onDone = listen) {
+            sound = sound.copy(fadeInSeconds = (it * 2).roundToInt() / 2.0)
         }
-        SettingSlider("Length", "${sound.length.toText(1)} s", sound.length, 1f..12f, onDone = listen) {
-            sound = sound.copy(length = it)
+        SettingSlider("Length", "${sound.lengthSeconds.toText(1)} s", sound.lengthSeconds, 1f..12f, onDone = listen) {
+            sound = sound.copy(lengthSeconds = it)
         }
         // An existing sound saves only changed settings; its name is already saved by the rename. A new sound saves
         // even unchanged.

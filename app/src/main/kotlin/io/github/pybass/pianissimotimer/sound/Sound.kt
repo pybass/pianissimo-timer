@@ -3,7 +3,7 @@ package io.github.pybass.pianissimotimer.sound
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// How a sound is made. The tone and a short soft start belong to the type; the note, the rise and the length are
+// How a sound is made. The tone and a short soft start belong to the type; the note, the fade-in and the length are
 // settable. Saved as lowercase words, so a rename of a constant does not change the file.
 // The names describe the character, not a real instrument: a synthesizer never becomes one.
 @Serializable
@@ -30,12 +30,12 @@ data class Sound(
     val type: SoundType = SoundType.PIANO,
     // MIDI note number; 60 is C4, 262 Hz.
     val note: Int = 60,
-    // Seconds the loudness grows before the sound starts to fade; 0 leaves only the soft start of the type.
-    val rise: Double = 0.0,
-    // Seconds to fade by 60 dB.
-    val length: Double = 5.0,
+    // Seconds the loudness grows before the sound rings; 0 leaves only the soft start of the type.
+    val fadeInSeconds: Double = 0.0,
+    // Seconds the sound rings, from full loudness to silence (60 dB down).
+    val lengthSeconds: Double = 5.0,
 ) {
-    fun samples() = synthesize(type, note, rise, length)
+    fun samples() = synthesize(type, note, fadeInSeconds, lengthSeconds)
 }
 
 // The sounds the library starts with, one per type, with fixed ids. Named after their types, as no sound is built in:
@@ -44,9 +44,9 @@ data class Sound(
 // swells like a breath, as its tone never changes; the string is low, where a pluck keeps its overtones.
 val DefaultSounds = listOf(
     Sound("piano", "Piano"),
-    Sound("bell", "Bell", SoundType.BELL, note = 72, length = 8.0),
-    Sound("flute", "Flute", SoundType.FLUTE, note = 64, rise = 1.5, length = 4.0),
-    Sound("string", "String", SoundType.STRING, note = 55, length = 6.0),
+    Sound("bell", "Bell", SoundType.BELL, note = 72, lengthSeconds = 8.0),
+    Sound("flute", "Flute", SoundType.FLUTE, note = 64, fadeInSeconds = 1.5, lengthSeconds = 4.0),
+    Sound("string", "String", SoundType.STRING, note = 55, lengthSeconds = 6.0),
 )
 
 // What a bell plays when its own sound is missing, and the sound of a new timer in a new library.

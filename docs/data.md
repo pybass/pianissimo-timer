@@ -47,10 +47,10 @@ Rules of the document:
     }
   ],
   "sounds": [
-    { "id": "piano", "name": "Piano", "type": "piano", "note": 60, "rise": 0.0, "length": 5.0 },
-    { "id": "bell", "name": "Bell", "type": "bell", "note": 72, "rise": 0.0, "length": 8.0 },
-    { "id": "flute", "name": "Flute", "type": "flute", "note": 64, "rise": 1.5, "length": 4.0 },
-    { "id": "string", "name": "String", "type": "string", "note": 55, "rise": 0.0, "length": 6.0 }
+    { "id": "piano", "name": "Piano", "type": "piano", "note": 60, "fadeInSeconds": 0.0, "lengthSeconds": 5.0 },
+    { "id": "bell", "name": "Bell", "type": "bell", "note": 72, "fadeInSeconds": 0.0, "lengthSeconds": 8.0 },
+    { "id": "flute", "name": "Flute", "type": "flute", "note": 64, "fadeInSeconds": 1.5, "lengthSeconds": 4.0 },
+    { "id": "string", "name": "String", "type": "string", "note": 55, "fadeInSeconds": 0.0, "lengthSeconds": 6.0 }
   ],
   "state": {
     "type": "paused",
@@ -59,12 +59,12 @@ Rules of the document:
     "bells": [
       {
         "dueAt": 1762601500000,
-        "sound": { "id": "piano", "name": "Piano", "type": "piano", "note": 60, "rise": 0.0, "length": 5.0 },
+        "sound": { "id": "piano", "name": "Piano", "type": "piano", "note": 60, "fadeInSeconds": 0.0, "lengthSeconds": 5.0 },
         "volumeDb": 0
       },
       {
         "dueAt": 1762601800000,
-        "sound": { "id": "bell", "name": "Bell", "type": "bell", "note": 72, "rise": 0.0, "length": 8.0 },
+        "sound": { "id": "bell", "name": "Bell", "type": "bell", "note": 72, "fadeInSeconds": 0.0, "lengthSeconds": 8.0 },
         "volumeDb": -6
       }
     ]
@@ -117,8 +117,8 @@ The other two states:
 | `name` | Shown to the user. Unique among sounds, ignoring case. |
 | `type` | The synthesizer recipe: `piano`, `bell`, `flute` or `string`. |
 | `note` | MIDI note number; 60 is C4, 262 Hz. |
-| `rise` | Seconds the loudness grows before the sound starts to fade; 0 leaves only the soft start of the type. |
-| `length` | Seconds to fade by 60 dB after the rise. |
+| `fadeInSeconds` | Seconds the loudness grows before the sound rings; 0 leaves only the soft start of the type. |
+| `lengthSeconds` | Seconds the sound rings, from full loudness to silence (60 dB down). It starts after the fade-in. |
 
 ### State
 

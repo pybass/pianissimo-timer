@@ -14,11 +14,13 @@ import io.github.pybass.pianissimotimer.timer.TimerState
 internal object V1 {
     private const val POMODORO_ID = "7a1c2e40-9d7b-4a3f-8e0c-2b6f1d9a5c11"
 
-    private const val PIANO_JSON = """{"id":"piano","name":"Piano","type":"piano","note":60,"rise":0.0,"length":5.0}"""
-    private const val BELL_JSON = """{"id":"bell","name":"Bell","type":"bell","note":72,"rise":0.0,"length":8.0}"""
+    private const val PIANO_JSON =
+        """{"id":"piano","name":"Piano","type":"piano","note":60,"fadeInSeconds":0.0,"lengthSeconds":5.0}"""
+    private const val BELL_JSON =
+        """{"id":"bell","name":"Bell","type":"bell","note":72,"fadeInSeconds":0.0,"lengthSeconds":8.0}"""
     private const val SOUNDS_JSON = """[$PIANO_JSON,$BELL_JSON,""" +
-        """{"id":"flute","name":"Flute","type":"flute","note":64,"rise":1.5,"length":4.0},""" +
-        """{"id":"string","name":"String","type":"string","note":55,"rise":0.0,"length":6.0}]"""
+        """{"id":"flute","name":"Flute","type":"flute","note":64,"fadeInSeconds":1.5,"lengthSeconds":4.0},""" +
+        """{"id":"string","name":"String","type":"string","note":55,"fadeInSeconds":0.0,"lengthSeconds":6.0}]"""
 
     private const val TIMERS_JSON = """[{"id":"$POMODORO_ID","name":"Pomodoro","steps":[""" +
         """{"seconds":1500,"soundId":"piano","volumeDb":0},{"seconds":300,"soundId":"bell","volumeDb":-6}]},""" +
@@ -26,12 +28,12 @@ internal object V1 {
 
     // Written out, not `DefaultSounds`: a changed default is not a changed format.
     private val piano = Sound("piano", "Piano")
-    private val bell = Sound("bell", "Bell", SoundType.BELL, note = 72, length = 8.0)
+    private val bell = Sound("bell", "Bell", SoundType.BELL, note = 72, lengthSeconds = 8.0)
     private val sounds = listOf(
         piano,
         bell,
-        Sound("flute", "Flute", SoundType.FLUTE, note = 64, rise = 1.5, length = 4.0),
-        Sound("string", "String", SoundType.STRING, note = 55, length = 6.0),
+        Sound("flute", "Flute", SoundType.FLUTE, note = 64, fadeInSeconds = 1.5, lengthSeconds = 4.0),
+        Sound("string", "String", SoundType.STRING, note = 55, lengthSeconds = 6.0),
     )
 
     private val bells = listOf(
