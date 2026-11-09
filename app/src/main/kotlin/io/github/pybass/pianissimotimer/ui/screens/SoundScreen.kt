@@ -3,21 +3,23 @@
 package io.github.pybass.pianissimotimer.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,11 +47,11 @@ import io.github.pybass.pianissimotimer.ui.components.PillButton
 import io.github.pybass.pianissimotimer.ui.components.RenameDialog
 import io.github.pybass.pianissimotimer.ui.components.SettingSlider
 import io.github.pybass.pianissimotimer.ui.theme.Action
-import io.github.pybass.pianissimotimer.ui.theme.ContentWidth
+import io.github.pybass.pianissimotimer.ui.theme.Brass
 import io.github.pybass.pianissimotimer.ui.theme.Danger
 import io.github.pybass.pianissimotimer.ui.theme.Ink
 import io.github.pybass.pianissimotimer.ui.theme.Muted
-import io.github.pybass.pianissimotimer.ui.theme.Paper
+import io.github.pybass.pianissimotimer.ui.theme.StepsWidth
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -77,80 +80,72 @@ fun SoundScreen(
     val listen = { onListen(sound) }
     // The system back gesture cancels, as the Cancel button does.
     BackHandler(onBack = onCancel)
-    Column(Modifier.width(ContentWidth), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // The name and the pencil are one button. Renaming is rare, so it has no field of its own.
-            Row(
-                Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { renaming = true }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    sound.name,
-                    Modifier.weight(1f, fill = false),
-                    color = Ink,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Icon(painterResource(R.drawable.ic_edit), contentDescription = "Rename", Modifier.size(18.dp), tint = Muted)
-            }
-            ListenButton(listen)
-        }
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            val types = SoundType.entries
-            types.forEachIndexed { i, type ->
-                SegmentedButton(
-                    selected = type == sound.type,
-                    onClick = {
-                        sound = sound.copy(type = type)
-                        onListen(sound)
-                    },
-                    shape = SegmentedButtonDefaults.itemShape(i, types.size),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = Action,
-                        activeContentColor = Paper,
-                        activeBorderColor = Action,
-                        inactiveContentColor = Ink,
-                        inactiveBorderColor = Action.copy(alpha = 0.4f),
-                    ),
-                    // The check mark would crowd four short labels.
-                    icon = {},
-                    // Four labels share ContentWidth: the default 12 dp padding and a large system font wrap "String".
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp),
+    // Hung from the top like the step screen, Save at the bottom like Start and Done; the free height sits between.
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.height(16.dp))
+        Column(Modifier.width(StepsWidth), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // The name and the pencil are one button. Renaming is rare, so it has no field of its own.
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { renaming = true }
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(type.label, fontSize = 14.sp, maxLines = 1)
+                    Text(
+                        sound.name,
+                        Modifier.weight(1f, fill = false),
+                        color = Ink,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Icon(painterResource(R.drawable.ic_edit), contentDescription = "Rename", Modifier.size(18.dp), tint = Muted)
                 }
+                ListenButton(listen)
             }
-        }
-        // The slider stops on whole notes only: a stop for every note but the two ends.
-        val notes = NoteRange.count() - 2
-        SettingSlider("Pitch", noteName(sound.note), sound.note.toDouble(), NoteRange.asFloat, steps = notes, onDone = listen) {
-            sound = sound.copy(note = it.roundToInt())
-        }
-        // A stop every half second: the ear tells no finer difference in a slow rise.
-        val halves = ((FadeInRange.endInclusive - FadeInRange.start) * 2).toInt() - 1
-        val rise = "${sound.fadeInSeconds.toText(1)} s"
-        SettingSlider("Rise", rise, sound.fadeInSeconds, FadeInRange.asFloat, steps = halves, onDone = listen) {
-            sound = sound.copy(fadeInSeconds = (it * 2).roundToInt() / 2.0)
-        }
-        SettingSlider("Length", "${sound.lengthSeconds.toText(1)} s", sound.lengthSeconds, LengthRange.asFloat, onDone = listen) {
-            sound = sound.copy(lengthSeconds = it)
+            TypeRow(sound.type) {
+                sound = sound.copy(type = it)
+                onListen(sound)
+            }
+            // The slider stops on whole notes only: a stop for every note but the two ends.
+            val notes = NoteRange.count() - 2
+            SettingSlider(
+                "Pitch",
+                noteName(sound.note),
+                sound.note.toDouble(),
+                NoteRange.asFloat,
+                steps = notes,
+                onDone = listen,
+            ) {
+                sound = sound.copy(note = it.roundToInt())
+            }
+            // A stop every half second: the ear tells no finer difference in a slow rise.
+            val halves = ((FadeInRange.endInclusive - FadeInRange.start) * 2).toInt() - 1
+            val rise = sound.fadeInSeconds.toText(1)
+            SettingSlider("Rise", rise, sound.fadeInSeconds, FadeInRange.asFloat, steps = halves, unit = "s", onDone = listen) {
+                sound = sound.copy(fadeInSeconds = (it * 2).roundToInt() / 2.0)
+            }
+            val length = sound.lengthSeconds.toText(1)
+            SettingSlider("Length", length, sound.lengthSeconds, LengthRange.asFloat, unit = "s", onDone = listen) {
+                sound = sound.copy(lengthSeconds = it)
+            }
         }
         // An existing sound saves only changed settings; its name is already saved by the rename. A new sound saves
         // even unchanged.
-        PillButton(
-            "Save",
-            Modifier.width(ContentWidth),
-            enabled = isNew || sound.copy(name = initial.name) != initial,
-            onClick = { onSave(sound) },
-        )
-        Row(Modifier.fillMaxWidth()) {
+        Box(Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) {
+            PillButton(
+                "Save",
+                Modifier.width(StepsWidth),
+                enabled = isNew || sound.copy(name = initial.name) != initial,
+                onClick = { onSave(sound) },
+            )
+        }
+        Row(Modifier.width(StepsWidth)) {
             if (!isNew) {
                 TextButton(
                     onClick = onDelete,
@@ -169,6 +164,7 @@ fun SoundScreen(
                 Text("Cancel", fontSize = 16.sp)
             }
         }
+        Spacer(Modifier.height(20.dp))
     }
     if (renaming) {
         RenameDialog(
@@ -181,6 +177,25 @@ fun SoundScreen(
             },
             onDismiss = { renaming = false },
         )
+    }
+}
+
+// The types of sound in one row, the chosen one in Ink with the brass dot under it, as the sheets mark the chosen
+// row. Each name is padded to a finger's height; the dot keeps its place under every name so the row does not jump
+// when the choice moves.
+@Composable
+private fun TypeRow(chosen: SoundType, onChoose: (SoundType) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        SoundType.entries.forEach { type ->
+            Column(
+                Modifier.clip(RoundedCornerShape(8.dp)).clickable { onChoose(type) }.padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(type.label, color = if (type == chosen) Ink else Muted, fontSize = 17.sp)
+                Spacer(Modifier.height(6.dp))
+                Box(Modifier.size(6.dp).background(if (type == chosen) Brass else Color.Transparent, CircleShape))
+            }
+        }
     }
 }
 

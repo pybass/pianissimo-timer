@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -18,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.pybass.pianissimotimer.data.AppData
 import io.github.pybass.pianissimotimer.sound.Sound
 import io.github.pybass.pianissimotimer.timer.Step
@@ -29,7 +27,6 @@ import io.github.pybass.pianissimotimer.ui.components.SoundBar
 import io.github.pybass.pianissimotimer.ui.components.TimeWheel
 import io.github.pybass.pianissimotimer.ui.components.TimerPicker
 import io.github.pybass.pianissimotimer.ui.theme.Ink
-import io.github.pybass.pianissimotimer.ui.theme.Soft
 import io.github.pybass.pianissimotimer.ui.theme.StepsWidth
 
 // The chosen timer while it has one step: a plain timer, as in the Clock app. The time is set on the wheel right
@@ -82,11 +79,8 @@ fun OneStepScreen(
                     onListen,
                 )
                 HorizontalDivider(color = Ink.copy(alpha = 0.12f))
-                Spacer(Modifier.height(14.dp))
-                // What happens at the end, where a first-time user looks for it: the app's promise in one line.
-                Text("Rings once at the end, then stays silent.", color = Soft, fontSize = 14.sp)
-                Spacer(Modifier.height(12.dp))
-                AddStepRow(onAddStep)
+                Spacer(Modifier.height(8.dp))
+                AddStepRow(onAddStep, inList = false)
             }
             Spacer(Modifier.weight(2f))
         }

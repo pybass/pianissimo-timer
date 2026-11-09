@@ -13,8 +13,8 @@ android {
         minSdk = 36
         targetSdk = 37
         // Android installs an update only when this number is higher than the installed one. Raise it every release.
-        versionCode = 4
-        versionName = "0.3.0"
+        versionCode = 5
+        versionName = "0.4.0"
         // Fills `${appName}` in the manifest: the name under the launcher icon.
         manifestPlaceholders["appName"] = "Pianissimo Timer"
     }

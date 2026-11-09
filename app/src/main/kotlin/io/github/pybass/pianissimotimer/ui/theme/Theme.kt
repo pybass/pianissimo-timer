@@ -56,9 +56,9 @@ val TimeStyle = TextStyle(
     lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Bottom, LineHeightStyle.Trim.None),
 )
 
-// The narrow column of the sound screen's controls and the timer picker.
+// The widest the timer picker's name may grow.
 val ContentWidth = 260.dp
 
-// The step list, its bar and the buttons under them, on every screen: the sound row and Done on the step screen too,
-// so the screens line up.
+// The step list, its bar and the buttons under them, on every screen: the sound row and Done on the step screen and
+// the controls of the sound screen too, so the screens line up.
 val StepsWidth = 300.dp
